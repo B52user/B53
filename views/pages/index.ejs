@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EJS Is Fun</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+<style>
+  body { padding-top:10px; }
+  div.andX div{
+      background-color: bisque;
+      border-left:1px solid green;
+  }
+</style>
+</head>
+<body class="container">
+<header>
+    <%- include('../partials/menu'); %>
+</header>
+<main>
+  <div class="jumbotron">
+    <h1>Test1</h1>
+    <p>Test2</p>
+  </div>
+  <div class="row andX">
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+    <div class="col-md-1">.col-md-1</div>
+  </div>
+  <div class="row andX">
+    <div class="col-md-8">.col-md-8</div>
+    <div class="col-md-4">.col-md-4</div>
+  </div>
+  <div class="row andX">
+    <div class="col-md-4">.col-md-4</div>
+    <div class="col-md-4">.col-md-4</div>
+    <div class="col-md-4">.col-md-4</div>
+  </div>
+  <div class="row andX">
+    <div class="col-md-6">.col-md-6</div>
+    <div class="col-md-6">.col-md-6</div>
+  </div>
+</main>
+</body>
+</html>
