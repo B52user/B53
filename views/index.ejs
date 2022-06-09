@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>B53</title>
+    <link href="/static/bootstrap-night.min.css" rel="stylesheet">
+<style>
+  body { 
+      padding-top:10px; 
+    }
+  div.andX div{
+
+      background-color: rgb(30, 36, 31);
+      border-left:1px solid rgb(104, 201, 104);
+  }
+  @media (prefers-color-scheme: dark) {
+    --body-bg: #000;
+    --body-color: #fff;
+    }
+</style>
+</head>
+<body class="bootstrap-dark">
+<header>
+    <%- include('header'); %>
+</header>
+<main>
+    <%- include(page); %>
+</main>
+</body>
+</html>
