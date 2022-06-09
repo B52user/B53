@@ -3,10 +3,13 @@ const app = express();
 const { Client } = require('pg');
 const connectionString = 'postgresql://b53:Pa$$w0rd@localhost:5432/B53';
 const db = new Client({connectionString});
+const Binance = require('node-binance-api-ext');
+const bi = Binance();
 
 app.set("view engine", "ejs");;
 app.listen(3000);
 db.connect();
+
 
 //routes
 app.use("/static",express.static("static"));
@@ -36,4 +39,13 @@ db.query('select * from dbo.b53settings',(err,res)=>{
       } else {
         console.log(res)
       }
+});
+
+bi.futures.exchangeInfo().then(a=>
+    {
+        console.log(a);
+    })
+
+bi.spot.exchangeInfo().then(b=>{
+    console.log(b);
 });
