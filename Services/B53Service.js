@@ -29,3 +29,5 @@ class B53Service
 		clearInterval(this.Service);
 	}
 }
+
+module.exports = B53Service;

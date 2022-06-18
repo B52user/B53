@@ -1,3 +1,5 @@
+const B53Service = require('./B53Service.js');
+
 class WorkBookUploadService{
     DB;
     #_freq;
@@ -15,3 +17,5 @@ class WorkBookUploadService{
         if(B53Service.Srvs.some(a=>a.Name=="WorkBookUploadService_"+this.Market)) clearInterval(B53Service.Srvs.find(a=>a.Name=="WorkBookUploadService_"+this.Market).Service);
     }
 }
+
+module.exports = WorkBookUploadService;

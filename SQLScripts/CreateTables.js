@@ -1,4 +1,4 @@
-var B53CreateTablesSQL = {
+const B53CreateTablesSQL = {
     CreateMarkets:`
         CREATE TABLE IF NOT EXISTS dbo.B53Markets
         (
@@ -21,5 +21,17 @@ var B53CreateTablesSQL = {
             symbolid bigint NOT NULL
         );
     `
+    ,CreateSymbolTrade:(marketName,type,symbolName)=>`
+        CREATE TABLE IF NOT EXISTS dbo.b53_${marketName}_${type}_${symbolName}
+        (
+            id bigint NOT NULL,
+            buy boolean NOT NULL,
+            price numeric(12,8) NOT NULL,
+            quantity numeric(24,12) NOT NULL,
+            time bigint NOT NULL
+        );
+    `
     ,
 };
+
+module.exports = B53CreateTablesSQL;
