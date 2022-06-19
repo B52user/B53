@@ -19,9 +19,9 @@ const bi = Binance();
 //init Logic
 const DB = new B53DBAdapter_PG(pg_db);
 const Market = new B53MarketAdapter_Binance(bi);
-DB._db_table_exists("b53tradeupload").then(res=>console.log(res));
+
 //start tradeupload
-/*
+
 let tSrvs = [];
 (async()=>{
     let tradiesTonight = await DB.GetTradeUploadSymbolsByMarketName(Market.Name);
@@ -32,7 +32,7 @@ let tSrvs = [];
     });
     console.log(tSrvs);
 })();
-*/
+
 //init routes
 app.use("/static",express.static("static"));
 app.get('/', function(req, res) {res.render("report");});

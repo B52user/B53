@@ -22,7 +22,7 @@ const B53CreateTablesSQL = {
         );
     `
     ,CreateSymbolTrade:(tablename)=>`
-        CREATE TABLE IF NOT EXISTS dbo.${tableName}
+        CREATE TABLE IF NOT EXISTS dbo.${tablename}
         (
             id bigint NOT NULL,
             buy boolean NOT NULL,

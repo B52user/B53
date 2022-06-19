@@ -1,25 +1,26 @@
 class B53Service
 {
     #_freq;
-    Service;
-    Name;
-    Actions;
-    LastTimeRun;
     static Srvs = [];
     constructor(name,freq){
         this.#_freq = freq;
         this.Name = name;
         this.Actions = [];
         this.LastTimeRun = new Date().getTime();
+        this.Service = null;
+        this.lock = false;
     }
     Start() {
 		let that = this;
         if(this.Service!=null) this.Stop();
 		this.Service = setInterval(()=>{
+            if(that.lock) return;
+            that.lock = true;
+            that.LastTimeRun = new Date().getTime();
 			for (let i = 0; i < that.Actions.length; i++) {
  			   that.Actions[i]();
 			}
-            that.LastTimeRun = new Date().getTime();
+            that.lock = false;
 		}
         , this.#_freq);
         B53Service.Srvs.push({name:this.Name,id:this.Service});

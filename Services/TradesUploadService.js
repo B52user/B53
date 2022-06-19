@@ -8,7 +8,7 @@ class TradeUploadService {
         this.DB = dbAdapter;
         this.State = "";
         this.Symbol = symbol;
-        this.ServiceName = "TradeUploadService_"+(this.Symbol.isfutures?"FUT":"SPOT")+this.Symbol.symbol;
+        this.ServiceName = "TradeUploadService_"+(this.Symbol.isfutures?"FUT":"SPOT")+"_"+this.Symbol.symbol;
         this.Service = null;
     }
     async Start(){
@@ -19,9 +19,8 @@ class TradeUploadService {
         //set method
         let that = this;
         this.Service.Actions.push(async()=>{
-            console.log(this.ServiceName + " " + "1");
-            try
-            {
+            //try
+            //{
                 let lastTrades = await that.Market.GetLastTrades(that.Symbol);
                 let lastTrade = await that.DB.GetLastTrade(that.Market.Name,that.Symbol);
                 let filteredTrades = lastTrades.filter((a)=>a.id>lastTrade.id).map((b)=>({
@@ -31,8 +30,10 @@ class TradeUploadService {
                     quantity:b.qty,
                     time:b.time
                 }));
+                let st = new Date().getTime();
                 that.DB.AddTrades(that.Market.Name,that.Symbol,filteredTrades);
-
+                console.log(this.ServiceName + " " + (new Date().getTime()-st).toString());
+/*
                 //now fill gaps
                 let tNow = new Date().getTime();
                 let from = tNow - 60*60*1000*B53Settings.data_trades_upload_back_hours;
@@ -48,10 +49,11 @@ class TradeUploadService {
                     }
                     that.DB.AddTrades(that.Market.Name,that.Symbol,histTrade);
                 }
-            }
+*/
+            /*}
             catch(err){
                 console.error(err);
-            }
+            }*/
         });
         this.Service.Start();
     }

@@ -9,6 +9,16 @@ const Queries_Trades = {
         join dbo.b53symbols c on a.symbolid = c.id
         where b.name = '${marketName}'
     `,
+    GetLastTrade:(tableName) => `
+        select *
+        from dbo.${tableName}
+        order by id desc
+        limit 1
+    `,
+    InsertTrade:(tableName,trade) => `
+        INSERT INTO dbo.${tableName}(id, buy, price, quantity, "time")
+        VALUES (${trade.id}, ${trade.buy}, ${trade.price}, ${trade.quantity}, ${trade.time});
+    `,
 };
 
 module.exports = Queries_Trades;
