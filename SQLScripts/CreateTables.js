@@ -21,8 +21,8 @@ const B53CreateTablesSQL = {
             symbolid bigint NOT NULL
         );
     `
-    ,CreateSymbolTrade:(marketName,type,symbolName)=>`
-        CREATE TABLE IF NOT EXISTS dbo.b53_${marketName}_${type}_${symbolName}
+    ,CreateSymbolTrade:(tablename)=>`
+        CREATE TABLE IF NOT EXISTS dbo.${tableName}
         (
             id bigint NOT NULL,
             buy boolean NOT NULL,

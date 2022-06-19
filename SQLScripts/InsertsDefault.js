@@ -4,10 +4,12 @@ const InsertsDefault = {
         INSERT INTO dbo.B53Markets(name) VALUES ('FTX');
         `
     ,SymbolsDefault:`
-        INSERT INTO dbo.B53Symbols(symbol,isfutures) VALUES ('BTCUSDT',false);
-        INSERT INTO dbo.B53Symbols(symbol,isfutures) VALUES ('BTCUSDT',true);
         INSERT INTO dbo.B53Symbols(symbol,isfutures) VALUES ('API3USDT',false);
         INSERT INTO dbo.B53Symbols(symbol,isfutures) VALUES ('API3USDT',true);
+    `
+    ,TradeUploadDefault:`
+        INSERT INTO dbo.b53tradeupload(marketid,symbolid) VALUES (1,1);
+        INSERT INTO dbo.b53tradeupload(marketid,symbolid) VALUES (1,2);
     `
 };
 
