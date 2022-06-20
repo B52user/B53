@@ -13,12 +13,12 @@ class B53Service
     Start() {
 		let that = this;
         if(this.Service!=null) this.Stop();
-		this.Service = setInterval(()=>{
+		this.Service = setInterval(async()=>{
             if(that.lock) return;
             that.lock = true;
             that.LastTimeRun = new Date().getTime();
 			for (let i = 0; i < that.Actions.length; i++) {
- 			   that.Actions[i]();
+ 			   await that.Actions[i]();
 			}
             that.lock = false;
 		}

@@ -26,7 +26,7 @@ let tSrvs = [];
 (async()=>{
     let tradiesTonight = await DB.GetTradeUploadSymbolsByMarketName(Market.Name);
     tradiesTonight.forEach(t => {
-        let tS = new TradeUploadService(Market,DB,5000,t);
+        let tS = new TradeUploadService(Market,DB,1000,t);
         tS.Start();
         tSrvs.push(tS);
     });

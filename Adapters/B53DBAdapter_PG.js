@@ -29,16 +29,16 @@ class B53DBAdapter_PG
                     pg_tables
                 WHERE 
                     schemaname = 'dbo' AND 
-                    tablename  = '${name}'
+                    tablename  = '${name.toLowerCase()}'
                 );
         `;
         let res = await this.DB.query(eQuery);
         return res.rows[0].exists;
     }
     async _db_check_create() {
-        if(!this._db_table_exists("b53markets")) {await this.DB.query(B53CreateTablesSQL.CreateMarkets);await this.DB.query(InsertsDefault.MarketsDefaults);}
-        if(!this._db_table_exists("b53symbols")) {await this.DB.query(B53CreateTablesSQL.CreateSymbols);await this.DB.query(InsertsDefault.SymbolsDefault);}
-        if(!this._db_table_exists("b53tradeupload")) {await this.DB.query(B53CreateTablesSQL.CreateTradeUpload);await this.DB.query(InsertsDefault.TradeUploadDefault);}
+        if(!(await this._db_table_exists("b53markets"))) {await this.DB.query(B53CreateTablesSQL.CreateMarkets);await this.DB.query(InsertsDefault.MarketsDefaults);}
+        if(!(await this._db_table_exists("b53symbols"))) {await this.DB.query(B53CreateTablesSQL.CreateSymbols);await this.DB.query(InsertsDefault.SymbolsDefault);}
+        if(!(await this._db_table_exists("b53tradeupload"))) {await this.DB.query(B53CreateTablesSQL.CreateTradeUpload);await this.DB.query(InsertsDefault.TradeUploadDefault);}
     }
     _db_trade_table(marketName,symbol) {return "b53_" + marketName + "_" + (symbol.isfutures?"F":"S") + "_" + symbol.symbol;}
 
@@ -57,16 +57,29 @@ class B53DBAdapter_PG
         return lastTrade.rows[0];
     }
     async GetTradesGap(marketName,symbol,from) {
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(B53CreateTablesSQL.CreateSymbolTrade(tableName));}
 
+        let res = await this.DB.query(Queries_Trades.GetGap(tableName,from));
+        //we need to skip top
+        if(res.rowCount>3) throw "GetTradesGap res.rowCount > 3 !?";
+        if(res.rowCount==3) {
+            return {to:res.rows[1].id,from:res.rows[2].id};
+        }
+        if(res.rowCount==2) {
+            return {to:res.rows[1].id};
+        }
+        return {to:null};
     }
     async AddTrades(marketName,symbol,trades) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
         if(!itExists) {await this.DB.query(B53CreateTablesSQL.CreateSymbolTrade(tableName));}
 
-        trades.forEach(async(t) => {
+        for (const t of trades) {
             await this.DB.query(Queries_Trades.InsertTrade(tableName,t));
-        });
+        }
     }
     
 }

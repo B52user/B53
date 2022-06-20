@@ -19,6 +19,26 @@ const Queries_Trades = {
         INSERT INTO dbo.${tableName}(id, buy, price, quantity, "time")
         VALUES (${trade.id}, ${trade.buy}, ${trade.price}, ${trade.quantity}, ${trade.time});
     `,
+    GetGap:(tableName,timeFrom) => `
+        select id, buy, price, quantity, "time"
+        from dbo.${tableName} a
+        where 
+            a."time" > ${timeFrom}
+            and
+            (not exists (
+                select id from dbo.${tableName} b
+                where b.id = a.id - 1
+                limit 1
+            )
+            or
+            not exists (
+                select id from dbo.${tableName} c
+                where c.id = a.id + 1
+                limit 1
+            ))
+        order by a.id desc
+        limit 3
+    `,
 };
 
 module.exports = Queries_Trades;
