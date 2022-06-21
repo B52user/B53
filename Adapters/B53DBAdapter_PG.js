@@ -61,16 +61,16 @@ class B53DBAdapter_PG
         let itExists = await this._db_table_exists(tableName);
         if(!itExists) {await this.DB.query(B53CreateTablesSQL.CreateSymbolTrade(tableName));}
 
-        let res = await this.DB.query(Queries_Trades.GetGap(tableName,from));
-        //we need to skip top
-        if(res.rowCount>3) throw "GetTradesGap res.rowCount > 3 !?";
-        if(res.rowCount==3) {
-            return {to:res.rows[1].id,from:res.rows[2].id};
+        let resTo = await this.DB.query(Queries_Trades.GetGapTo(tableName,from));
+        let toReturn = {to:null};
+        if(resTo.rowCount==1) {
+            toReturn.to = resTo.rows[0].id;
+            let resFrom = await this.DB.query(Queries_Trades.GetGapFrom(tableName,from,toReturn.to));
+            if(resFrom.rowCount==1){
+                toReturn.from = resFrom.rows[0].id;
+            }
         }
-        if(res.rowCount==2) {
-            return {to:res.rows[1].id};
-        }
-        return {to:null};
+        return toReturn;
     }
     async AddTrades(marketName,symbol,trades) {
         let tableName = this._db_trade_table(marketName,symbol);

@@ -16,11 +16,11 @@ class B53MarketAdapter_Binance{
         }
         else
         {
-            return await this.BI.spot.trades(symbolInfo.symbol,{limit:500});
+            return await this.BI.spot.recentTrades(symbolInfo.symbol,{limit:500});
         }
     }
     async GetHistoricalTrades(symbolInfo,lastid) {
-        lastid = lastid - 500;
+        lastid = lastid - 500 + 1;
         if(symbolInfo.isfutures) {
             return await this.BI.futures.historicalTrades(symbolInfo.symbol,{fromId:lastid,limit:500});
         }
