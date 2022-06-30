@@ -1,0 +1,135 @@
+<%- include('header'); %>
+<h3>SYMBOLS</h3>
+<div class="row">
+    <div class="col-1 text-end"><input class="form-check-input big-checkbox " type="checkbox" value=""></div>
+    <div class="col-1"><button class="btn btn-success btn-sm col-12" id="B53_Symbols_New" data-bs-toggle="modal" data-bs-target="#b53_newCoin">📝 New</button></div>
+    <div class="col-1"><button class="btn btn-danger btn-sm col-12" id="B53_Symbols_Delete">💩 Delete</button></div>
+    <div class="col-5"></div>
+    <div class="col-1"><button class="btn btn-info btn-sm col-12" id="B53_Symbols_Refresh">🔋 Refresh</button></div>
+</div>
+<div class="row mt-3">
+    <div class="accordion">
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="row">
+                            <span class="col-1 border-end text-end"><input class="form-check-input big-checkbox" type="checkbox" value=""></span>
+                            <span class="col-3 border-end text-start fs-5">1000BTCUSDT</span>
+                            <span class="col-2"><button class="btn btn-success btn-sm col-12">REAL</button></span>
+                            <span class="col-2"><button class="btn btn-success btn-sm col-12">HIST</button></span>
+                            <span class="col-2"></span>
+                            
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <span class="col-2"></span>
+                            <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
+                            <span class="col-8">
+                                <button id="b53_1000btcusdt_colapse" class="btn-sm accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    SHOW!
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="collapseTwo" class="accordion-collapse collapse">
+              <div class="accordion-body" id="b53_1000btcusdt_body">
+                <span class="fs-1">
+                    🕡
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="row">
+                            <span class="col-1 border-end text-end"><input class="form-check-input big-checkbox" type="checkbox" value=""></span>
+                            <span class="col-3 border-end text-start fs-5">API3USDT</span>
+                            <span class="col-2"><button class="btn btn-success btn-sm col-12">REAL</button></span>
+                            <span class="col-2"><button class="btn btn-success btn-sm col-12">HIST</button></span>
+                            <span class="col-2"></span>
+                            
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <span class="col-2"></span>
+                            <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
+                            <span class="col-8">
+                                <button id="b53_api3_colapse" class="btn-sm accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#b53_api3_colapsearea" aria-expanded="false" aria-controls="b53_api3_colapsearea">
+                                    SHOW!
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="b53_api3_colapsearea" class="accordion-collapse collapse">
+              <div class="accordion-body" id="b53_api3_body">
+                <span class="fs-1">
+                    🕡
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="b53_newCoin" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Futures</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="container-fluid form-inline">
+                <div class="row">
+                    <div class="col-3">
+                        <label for="b53_new_market" class="form-label">Market</label>
+                        <input class="form-control" list="datalistOptions" id="b53_new_market" placeholder="Type to search...">
+                        <datalist id="datalistOptions">
+                            <option value="Binance" selected>
+                            <option value="FTX">
+                        </datalist>
+                    </div>
+                    <div class="col-3">
+                        <label for="b53_new_futuresName" class="form-label">Futures Name</label>
+                        <input class="form-control" list="datalistOption2" id="b53_new_futuresName" placeholder="Futures Name">
+                        <datalist id="datalistOption2">
+                            <option value="BTCUSDT"></option>
+                            <option value="API3USDT"></option>
+                            <option value="FLMUSDT" disabled></option>
+                            <option value="SUSHIUSDT"></option>
+                        </datalist>
+                    </div>
+                    <div class="col-3">
+                        <label for="b53_new_spotName" class="form-label">Spot Name</label>
+                        <input class="form-control" list="datalistOption3" id="b53_new_spotName" placeholder="Spot Name">
+                        <datalist id="datalistOption3">
+                            <option value="BTCUSDT"></option>
+                            <option value="API3USDT"></option>
+                            <option value="FLMUSDT"></option>
+                            <option value="SUSHIUSDT"></option>
+                        </datalist>
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-3">
+                        <label for="b53_new_hours" class="form-label">Hours to upload history</label>
+                        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_new_hours">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<%- include('footer'); %>

@@ -4,31 +4,34 @@
     <meta charset="UTF-8">
     <title>B53</title>
     <link href="/static/bootstrap-night.min.css" rel="stylesheet">
-    <script src="/static/tv.js" lang="javascript"></script>
-<style>
-  body { 
-      margin-left:10px;
-    }
-  .row div{
-      background-color: rgb(46, 46, 46);
-      border:1px solid rgb(102, 102, 102);
-  }
-  html {
-        font-size: 0.9rem;
-    }
-</style>
+    <script src="/static/bootstrap.min.js"></script>
+    <script src="/static/jquery-3.6.0.min.js"></script>
+    <script src="/static/interface.js"></script>
+    <script src="/static/tv.js"></script>
+    <style>
+        .accordion-button {
+            padding:.25rem .5rem;
+        }
+        .big-checkbox {width: 20px; height: 20px;}
+        body { 
+        margin-left:10px;
+        }
+        html {
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body class="bootstrap container">
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
+            <!--<li class="nav-item">
                 <a class="nav-link" href="/report">Main</a>
-            </li>
+            </li>-->
             <li class="nav-item">
-                <a class="nav-link" href="/back">Backtests</a>
+                <a class="nav-link" href="/symbols">SYMBOLS</a>
             </li>
-            <li class="nav-item">
+            <!--<li class="nav-item">
                 <a class="nav-link" href="/data">Data</a>
             </li>
             <li class="nav-item">
@@ -36,7 +39,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/settings">Settings</a>
-            </li>
+            </li>-->
         </ul>
     </nav>
 </header>

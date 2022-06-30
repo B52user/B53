@@ -30,7 +30,7 @@ const Market = new B53MarketAdapter_Binance(bi);
     let ix = await bi.spot.recentTrades("FLMUSDT");
     console.log(ix);
 })();*/
-
+/*
 let tSrvs = [];
 (async()=>{
     let tradiesTonight = await DB.GetTradeUploadSymbolsByMarketName(Market.Name);
@@ -41,12 +41,26 @@ let tSrvs = [];
     });
     console.log(tSrvs);
 })();
-
+*/
 //init routes
 app.use("/static",express.static("static"));
 app.get('/', function(req, res) {res.render("report");});
-app.get('/report', function(req, res) {res.render("report");});
+app.get('/s_d', function(req, res) {res.render("symbol_dashboard");});
+app.get('/symbols', function(req, res) {res.render("symbols");});
+/*
 app.get('/data', function(req, res) {res.render("data");});
 app.get('/service', function(req, res) {res.render("service");});
 app.get('/settings', function(req, res) {res.render("settings");});
-app.get('/back', function(req, res) {res.render("back");});
+*/
+
+//controllers
+app.get("/candles",async(req,res)=>{
+    //get vars
+    let market = req.query.market;
+    let from = req.query.from;
+    let to = req.query.to;
+    let time = req.query.time;
+    let symbol = req.query.symbol;
+    let isfutures = req.query.isfutures;
+    res.json(await DB.GetCandles(market,{isfutures:isfutures,symbol:symbol},time)); 
+});

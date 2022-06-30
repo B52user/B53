@@ -1,0 +1,61 @@
+<div class="row">
+    <div class="col-1">
+        <select class="form-select form-select-sm" aria-label="Market">
+            <option selected>Market</option>
+            <option value="1">Binance</option>
+            <option value="2">FTX</option>
+      </select>
+    </div>
+    <div class="col-1"><input class="form-control form-control-sm" type="text" placeholder="Futures Name"></div>
+    <div class="col-1"><input class="form-control form-control-sm" type="text" placeholder="Spot Name"></div>
+</div>
+<div class="row">
+    <div class="col-11">
+        <div id="penisholder"></div>
+    </div>
+</div>
+<script lang="js">
+    var chart = LightweightCharts.createChart(document.getElementById("penisholder"), {
+	width: 1200,
+    height: 600,
+	layout: {
+		backgroundColor: '#171B26',
+		textColor: 'rgba(255, 255, 255, 0.9)',
+	},
+	grid: {
+		vertLines: {
+			color: '#334158',
+		},
+		horzLines: {
+			color: '#334158',
+		},
+	},
+	crosshair: {
+		mode: LightweightCharts.CrosshairMode.Normal,
+	},
+	rightPriceScale: {
+		borderColor: '#485c7b',
+	},
+	timeScale: {
+		borderColor: '#485c7b',
+        timeVisible : true,
+        secondsVisible: true
+	},
+});
+
+var candleSeries = chart.addCandlestickSeries({
+  upColor: '#26A69A',
+  downColor: '#EF5350',
+  borderDownColor: '#EF5350',
+  borderUpColor: '#26A69A',
+  wickDownColor: '#EF5350',
+  wickUpColor: '#26A69A',
+});
+
+fetch("/candles?market=binance&time=300000&symbol=API3USDT&isfutures=true")
+.then(res=>res.json())
+.then(j=>{
+    candleSeries.setData(j);
+});
+
+</script>

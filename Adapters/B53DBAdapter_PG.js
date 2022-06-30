@@ -1,6 +1,7 @@
 const B53CreateTablesSQL = require('../SQLScripts/CreateTables.js');
 const InsertsDefault = require('../SQLScripts/InsertsDefault.js')
 const Queries_Trades= require('../SQLScripts/Queries_Trades.js');
+const Queries_Chart= require('../SQLScripts/Queries_Chart');
 const B53Settings = require('../B53Settings.js');
 const {Client} = require('pg');
 
@@ -80,6 +81,23 @@ class B53DBAdapter_PG
         for (const t of trades) {
             await this.DB.query(Queries_Trades.InsertTrade(tableName,t));
         }
+    }
+    async GetCandles(marketName,symbol,timeMS) {
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(B53CreateTablesSQL.CreateSymbolTrade(tableName));}
+        let candleRequest = await this.DB.query(Queries_Chart.GetCandles(tableName,timeMS));
+        let toReturn = [];
+        candleRequest.rows.forEach((r)=>{
+            toReturn.push({
+                time: r.candletime, 
+                open: parseFloat(r.startprice), 
+                high: parseFloat(r.maxshadow), 
+                low: parseFloat(r.minshadow), 
+                close: parseFloat(r.endprice)
+            });
+        });
+        return toReturn;
     }
     
 }
