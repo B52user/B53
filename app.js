@@ -64,3 +64,41 @@ app.get("/candles",async(req,res)=>{
     let isfutures = req.query.isfutures;
     res.json(await DB.GetCandles(market,{isfutures:isfutures,symbol:symbol},time)); 
 });
+app.get("/candles",async(req,res)=>{
+    //get vars
+    let market = req.query.market;
+    let from = req.query.from;
+    let to = req.query.to;
+    let time = req.query.time;
+    let symbol = req.query.symbol;
+    let isfutures = req.query.isfutures;
+    res.json(await DB.GetCandles(market,{isfutures:isfutures,symbol:symbol},time)); 
+});
+
+
+//renew coins
+bi.futures.exchangeInfo().then(info=>{
+    let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
+        symbol:s.symbol,
+        isfutures:true, 
+        mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
+        tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
+        minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
+        quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
+        minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').notional
+    }));
+    DB.InsertUpdateSymbols('Binance',symbolInfo);
+});
+
+bi.spot.exchangeInfo().then(info=>{
+    let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
+        symbol:s.symbol,
+        isfutures:false, 
+        mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
+        tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
+        minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
+        quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
+        minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').minNotional
+    }));
+    DB.InsertUpdateSymbols('Binance',symbolInfo);
+})
