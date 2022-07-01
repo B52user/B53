@@ -99,6 +99,14 @@ class B53DBAdapter_PG
         });
         return toReturn;
     }
+
+    async InsertUpdateSymbols(marketName,symbolsInfo) {
+        let marketid = await this.DB.query("select id from dbo.b53markets where name='"+marketName+"'");
+        for (const s of symbolsInfo) {
+            let query = InsertsDefault.SymobolUpdateInsert(marketid.rows[0].id,s);
+            await this.DB.query(query);
+        }
+    }
     
 }
 
