@@ -9,17 +9,19 @@
 </div>
 <div class="row mt-3">
     <div class="accordion">
+<% 
+        rows.forEach((row)=>{
+%>
         <div class="accordion-item">
             <div class="accordion-header">
                 <div class="row">
                     <div class="col-6">
                         <div class="row">
                             <span class="col-1 border-end text-end"><input class="form-check-input big-checkbox" type="checkbox" value=""></span>
-                            <span class="col-3 border-end text-start fs-5">1000BTCUSDT</span>
+                            <span class="col-3 border-end text-start fs-5 b53symb"><%= row.symbol %></span>
                             <span class="col-2"><button class="btn btn-success btn-sm col-12">REAL</button></span>
                             <span class="col-2"><button class="btn btn-success btn-sm col-12">HIST</button></span>
                             <span class="col-2"></span>
-                            
                         </div>
                     </div>
                     <div class="col-6">
@@ -27,7 +29,7 @@
                             <span class="col-2"></span>
                             <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
                             <span class="col-8">
-                                <button id="b53_1000btcusdt_colapse" class="btn-sm accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                <button id="b53_<%= row.symbol %>_colapse" class="btn-sm accordion-button collapsed b53colapse" type="button" data-bs-toggle="collapse" data-bs-target="#b53_<%= row.symbol %>_collapseTwo" aria-expanded="false" aria-controls="b53_<%= row.symbol %>_collapseTwo">
                                     SHOW!
                                 </button>
                             </span>
@@ -35,47 +37,16 @@
                     </div>
                 </div>
             </div>
-            <div id="collapseTwo" class="accordion-collapse collapse">
-              <div class="accordion-body" id="b53_1000btcusdt_body">
+            <div id="b53_<%= row.symbol %>_collapseTwo" class="accordion-collapse collapse">
+              <div class="accordion-body" id="b53_<%= row.symbol %>_body">
                 <span class="fs-1">
                     🕡
                 </div>
             </div>
         </div>
-
-        <div class="accordion-item">
-            <div class="accordion-header">
-                <div class="row">
-                    <div class="col-6">
-                        <div class="row">
-                            <span class="col-1 border-end text-end"><input class="form-check-input big-checkbox" type="checkbox" value=""></span>
-                            <span class="col-3 border-end text-start fs-5">API3USDT</span>
-                            <span class="col-2"><button class="btn btn-success btn-sm col-12">REAL</button></span>
-                            <span class="col-2"><button class="btn btn-success btn-sm col-12">HIST</button></span>
-                            <span class="col-2"></span>
-                            
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="row">
-                            <span class="col-2"></span>
-                            <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
-                            <span class="col-8">
-                                <button id="b53_api3_colapse" class="btn-sm accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#b53_api3_colapsearea" aria-expanded="false" aria-controls="b53_api3_colapsearea">
-                                    SHOW!
-                                </button>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="b53_api3_colapsearea" class="accordion-collapse collapse">
-              <div class="accordion-body" id="b53_api3_body">
-                <span class="fs-1">
-                    🕡
-                </div>
-            </div>
-        </div>
+<% 
+        });
+%>
     </div>
 </div>
 <div class="modal fade" id="b53_newCoin" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
@@ -86,34 +57,27 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
+            <div class="alert alert-danger" role="alert" id="b53_new_missing_data">
+                <strong>Missing!</strong> Some values arent set.
+            </div>
             <div class="container-fluid form-inline">
                 <div class="row">
                     <div class="col-3">
                         <label for="b53_new_market" class="form-label">Market</label>
-                        <input class="form-control" list="datalistOptions" id="b53_new_market" placeholder="Type to search...">
-                        <datalist id="datalistOptions">
-                            <option value="Binance" selected>
-                            <option value="FTX">
+                        <input class="form-control" list="b53_new_market_options" id="b53_new_market" placeholder="Type to search...">
+                        <datalist id="b53_new_market_options">
                         </datalist>
                     </div>
                     <div class="col-3">
                         <label for="b53_new_futuresName" class="form-label">Futures Name</label>
-                        <input class="form-control" list="datalistOption2" id="b53_new_futuresName" placeholder="Futures Name">
-                        <datalist id="datalistOption2">
-                            <option value="BTCUSDT"></option>
-                            <option value="API3USDT"></option>
-                            <option value="FLMUSDT" disabled></option>
-                            <option value="SUSHIUSDT"></option>
+                        <input class="form-control" list="b53_new_futures_list" id="b53_new_futuresName" placeholder="Futures Name">
+                        <datalist id="b53_new_futures_list">
                         </datalist>
                     </div>
                     <div class="col-3">
                         <label for="b53_new_spotName" class="form-label">Spot Name</label>
-                        <input class="form-control" list="datalistOption3" id="b53_new_spotName" placeholder="Spot Name">
-                        <datalist id="datalistOption3">
-                            <option value="BTCUSDT"></option>
-                            <option value="API3USDT"></option>
-                            <option value="FLMUSDT"></option>
-                            <option value="SUSHIUSDT"></option>
+                        <input class="form-control" list="b53_new_spot_list" id="b53_new_spotName" placeholder="Spot Name">
+                        <datalist id="b53_new_spot_list">
                         </datalist>
                     </div>
                 </div>
@@ -127,9 +91,100 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-primary" id="b53_new_symbol_save">Save changes</button>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    $(()=>{
+        $('#b53_new_missing_data').hide();
+        $("#B53_Symbols_New").on("mouseup",()=>{
+            fetch("/html_options?type=market")
+            .then((r) => r.json())
+            .then((h) => {
+                $("#b53_new_market_options").html(
+                    h.map(e=>`<option data-value='${e.value}' value='${e.name}'>`).join('')
+                );
+            })
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $("#B53_Symbols_Delete").on("mouseup",()=>{
+            
+        });
+        $("#B53_Symbols_Refresh").on("mouseup",()=>{
+            location.reload();
+        });
+        $(".b53colapse").on("mouseup",()=>{
+            console.log($(this).text());
+            if($(this).attr("aria-expanded")=="true")
+            {
+                $(this).find(".accordion-body").html("Loading....");
+            }
+            else
+            {
+                fetch("/s_d?s="+$(this).find(".b53symb").text())
+                .then((r) => r.text())
+                .then((h) => {
+                    $(this).find(".accordion-body").html(h);
+                })
+                .catch((er) => {
+                    console.warn(er);
+                });
+            }
+        });
+        $('#b53_new_market').change(()=>{
+
+            fetch("/html_options?type=symbols&isfutures=true&unmain=true&market="+$('#b53_new_market').val())
+            .then((r) => r.json())
+            .then((h) => {
+                
+                $("#b53_new_futures_list").html(
+                    h.map(e=>`<option data-value='${e.value}' value='${e.name}'>`).join('')
+                );
+            })
+            .catch((er) => {
+                console.warn(er);
+            });
+
+            fetch("/html_options?type=symbols&isfutures=false&unmain=true&market="+$('#b53_new_market').val())
+            .then((r) => r.json())
+            .then((h) => {
+                
+                $("#b53_new_spot_list").html(
+                    h.map(e=>`<option data-value='${e.value}' value='${e.name}'>`).join('')
+                );
+            })
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $('#b53_new_symbol_save').on("mouseup",()=>{
+            //check all in
+            let futid = $(`#b53_new_futures_list option[value='${$("#b53_new_futuresName").val()}']`).attr('data-value');
+            let spotid = $(`#b53_new_spot_list option[value='${$("#b53_new_spotName").val()}']`).attr('data-value');
+            let hrs = $('#b53_new_hours').val();
+            if(!futid||!spotid||!hrs) {$('#b53_new_missing_data').show();return;}
+            $('#b53_new_missing_data').hide();
+            fetch("/update?table=dbo.b53symbols&id="+futid,{method:'POST',
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body:JSON.stringify([
+                    {name:"pair",value:spotid},
+                    {name:"ismainlist",value:true},
+                    {name:"uploadhours",value:hrs}
+                ])}).then(()=>{
+                    //close done
+                    $('#b53_newCoin').modal('toggle');
+                    location.reload();
+            }).catch((er) => {
+                console.warn(er);
+            });
+        });
+    });
+</script>
 <%- include('footer'); %>
