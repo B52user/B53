@@ -90,12 +90,16 @@ function buildChart()
     });
 
     candleSeries = chart.addCandlestickSeries({
-    upColor: '#26A69A',
-    downColor: '#EF5350',
-    borderDownColor: '#EF5350',
-    borderUpColor: '#26A69A',
-    wickDownColor: '#EF5350',
-    wickUpColor: '#26A69A',
+        upColor: '#26A69A',
+        downColor: '#EF5350',
+        borderDownColor: '#EF5350',
+        borderUpColor: '#26A69A',
+        wickDownColor: '#EF5350',
+        wickUpColor: '#26A69A',
+        priceFormat: {
+            type: 'price',
+            minMove: parseFloat("<%= symbol.mintick %>").toFixed(<%= symbol.tickprecision %>+1)
+        }
     });
 
     fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
@@ -110,7 +114,6 @@ $(()=>{
 
     $("#b53_<%= symbol.id %>_update").on("mouseup",(e)=>{
         //save changes
-        console.log("!ATTAK!");
         let spotid = $(`#b53_<%= symbol.id %>_spot_list option[value='${$("#b53_<%= symbol.id %>_spotName").val()}']`).attr('data-value');
         let hrs = $('#b53_<%= symbol.id %>_hours').val();
         let hrs2 = $('#b53_<%= symbol.id %>_hours2').val();
@@ -152,7 +155,9 @@ $(()=>{
 
     setInterval(()=>{
         //get latest candle and update
-        fetch(`/lastcandle?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
+        let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
+        if(!tima) return;
+        fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
         .then(res=>res.json())
         .then(j=>{
             candleSeries.update(j);

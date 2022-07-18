@@ -72,133 +72,157 @@ app.get("/candles",async(req,res)=>{
         //get vars
         let symbolid = req.query.symbolid;
         let time = req.query.time;
+        if(symbolid=="undefined"||time=="undefined") {
+            res.status(500).send(`symbolid=${symbolid},time=${time}`);
+            return;
+        }
         let midnight = new Date();
         midnight.setHours(0,0,0,0);
         let theSymbol = await DB.GetSymbolById(symbolid);
         let cdls = await DB.GetCandles(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
         res.json(cdls); 
     }
-    catch(er) {console.error(er);res.sendStatus(500).send("candles");}
+    catch(er) {console.error(er);res.status(500).send("candles");}
 });
 app.get("/lastcandle",async(req,res)=>{
     try
-        {
+    {
         let symbolid = req.query.symbolid;
         let time = req.query.time;
+        if(symbolid=="undefined"||time=="undefined") {
+            res.status(500).send(`symbolid=${symbolid},time=${time}`);
+            return;
+        }
         let symb = await DB.GetSymbolById(symbolid);
         let ltc = await DB.GetLastCandle(symb.marketname,{isfutures:symb.isfutures,symbol:symb.symbol},time);
         res.json(ltc); 
     }
-    catch(er) {console.error(er);res.sendStatus(500).send("lastcandle");}
+    catch(er) {console.error(er);res.status(500).send("lastcandle");}
 });
 app.get("/html_options",async(req,res)=>{
-    let type=req.query.type;
-    let toReturn = [];
-    if(type=='market') {
-        let markets = await DB.GetMarkets();
-        toReturn = markets.map(m=>({name:m.name,value:m.id}));
+    try
+    {
+        let type=req.query.type;
+        let toReturn = [];
+        if(type=='market') {
+            let markets = await DB.GetMarkets();
+            toReturn = markets.map(m=>({name:m.name,value:m.id}));
+        }
+        if(type=='symbols'){
+            let isfutures = req.query.isfutures;
+            let market = req.query.market;
+            let symbs = await DB.GetSymbolsByTypeAndMarket(market,isfutures);
+            toReturn = symbs.map(s=>({name:s.symbol,value:s.id,ismainlist:s.ismainlist}));
+            if(req.query.unmain) toReturn = toReturn.filter(s=>!s.ismainlist);
+        }
+        res.json(toReturn); 
     }
-    if(type=='symbols'){
-        let isfutures = req.query.isfutures;
-        let market = req.query.market;
-        let symbs = await DB.GetSymbolsByTypeAndMarket(market,isfutures);
-        toReturn = symbs.map(s=>({name:s.symbol,value:s.id,ismainlist:s.ismainlist}));
-        if(req.query.unmain) toReturn = toReturn.filter(s=>!s.ismainlist);
-    }
-    res.json(toReturn); 
+    catch(er) {console.error(er);res.status(500).send("html_options");}
 });
 app.post("/update",async(req,res)=>{
     try
     {
         let table=req.query.table;
         let id=req.query.id;
+        if(table=="undefined"||id=="undefined") {
+            res.status(500).send(`table=${table},id=${id}`);
+            return;
+        }
         await DB.Update(table,id,req.body);
         res.sendStatus(200);
     }
-    catch(er) {console.error(er);res.sendStatus(500).send("lastcandle");}
+    catch(er) {console.error(er);res.status(500).send("lastcandle");}
 });
 app.post("/symbols_health",async(req,res)=>{
-    let symbolsArray = req.body;
-    let toReturn = [];
-    for(let s of symbolsArray)
+    try
     {
-        let symba = await DB.GetSymbolById(s);
-        let eInfo = {sid:s};
-        let t_srv = tSrvs.find(a=>a.Symbol.id == s);
-        if(!t_srv) eInfo.real = {style:"btn-secondary",text:"Fut R Off"}
-        else {
-            if((new Date().getTime() - t_srv.LastRealCandleTime)<2000) eInfo.real = {style:"btn-success",text:"Fut R <2s"}
-            else if((new Date().getTime() - t_srv.LastRealCandleTime)<5000) eInfo.real = {style:"btn-warning",text:"Fut R <5s"}
-            else eInfo.real = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+        let symbolsArray = req.body;
+        let toReturn = [];
+        for(let s of symbolsArray)
+        {
+            let symba = await DB.GetSymbolById(s);
+            let eInfo = {sid:s};
+            let t_srv = tSrvs.find(a=>a.Symbol.id == s);
+            if(!t_srv) eInfo.real = {style:"btn-secondary",text:"Fut R Off"}
+            else {
+                if((new Date().getTime() - t_srv.LastRealCandleTime)<2000) eInfo.real = {style:"btn-success",text:"Fut R <2s"}
+                else if((new Date().getTime() - t_srv.LastRealCandleTime)<5000) eInfo.real = {style:"btn-warning",text:"Fut R <5s"}
+                else eInfo.real = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+            }
+
+            let h_srv = hSrvs.find(a=>a.Symbol.id == s);
+            if(!h_srv) eInfo.hist = {style:"btn-secondary",text:"Fut H Off"}
+            else {
+                if(h_srv.HistoryTimeLeft!=null) {
+                    //calc time left
+                    let speed = (h_srv.HistoryTimeLeft.lastGapStartFrom - h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - h_srv.HistoryTimeLeft.lastGapStartTime);
+                    let timeLeft = (h_srv.HistoryTimeLeft.lastGapClose - h_srv.HistoryTimeLeft.timeWhenStop)/speed;
+                    eInfo.hist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
+                } 
+                else eInfo.hist = {style:"btn-success",text:"Fut H"};
+            }
+
+            let s_t_srv = tSrvs.find(a=>a.Symbol.id == symba.pair);
+            if(!s_t_srv) eInfo.sreal = {style:"btn-secondary",text:"Fut R Off"}
+            else {
+                if((new Date().getTime() - s_t_srv.LastRealCandleTime)<2000) eInfo.sreal = {style:"btn-success",text:"Fut R <2s"}
+                else if((new Date().getTime() - s_t_srv.LastRealCandleTime)<5000) eInfo.sreal = {style:"btn-warning",text:"Fut R <5s"}
+                else eInfo.sreal = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - s_t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+            }
+
+            let s_h_srv = hSrvs.find(a=>a.Symbol.id == symba.pair);
+            if(!s_h_srv) eInfo.shist = {style:"btn-secondary",text:"Fut H Off"}
+            else {
+                if(s_h_srv.HistoryTimeLeft!=null) {
+                    //calc time left
+                    let speed = (s_h_srv.HistoryTimeLeft.lastGapStartFrom - s_h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - s_h_srv.HistoryTimeLeft.lastGapStartTime);
+                    let timeLeft = (s_h_srv.HistoryTimeLeft.lastGapClose - s_h_srv.HistoryTimeLeft.timeWhenStop)/speed;
+                    eInfo.shist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
+                } 
+                else eInfo.shist = {style:"btn-success",text:"Fut H"};
+            }
+
+            toReturn.push(eInfo); 
         }
 
-        let h_srv = hSrvs.find(a=>a.Symbol.id == s);
-        if(!h_srv) eInfo.hist = {style:"btn-secondary",text:"Fut H Off"}
-        else {
-            if(h_srv.HistoryTimeLeft!=null) {
-                //calc time left
-                let speed = (h_srv.HistoryTimeLeft.lastGapStartFrom - h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - h_srv.HistoryTimeLeft.lastGapStartTime);
-                let timeLeft = (h_srv.HistoryTimeLeft.lastGapClose - h_srv.HistoryTimeLeft.timeWhenStop)/speed;
-                eInfo.hist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
-            } 
-            else eInfo.hist = {style:"btn-success",text:"Fut H"};
-        }
-
-        let s_t_srv = tSrvs.find(a=>a.Symbol.id == symba.pair);
-        if(!s_t_srv) eInfo.sreal = {style:"btn-secondary",text:"Fut R Off"}
-        else {
-            if((new Date().getTime() - s_t_srv.LastRealCandleTime)<2000) eInfo.sreal = {style:"btn-success",text:"Fut R <2s"}
-            else if((new Date().getTime() - s_t_srv.LastRealCandleTime)<5000) eInfo.sreal = {style:"btn-warning",text:"Fut R <5s"}
-            else eInfo.sreal = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - s_t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
-        }
-
-        let s_h_srv = hSrvs.find(a=>a.Symbol.id == symba.pair);
-        if(!s_h_srv) eInfo.shist = {style:"btn-secondary",text:"Fut H Off"}
-        else {
-            if(s_h_srv.HistoryTimeLeft!=null) {
-                //calc time left
-                let speed = (s_h_srv.HistoryTimeLeft.lastGapStartFrom - s_h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - s_h_srv.HistoryTimeLeft.lastGapStartTime);
-                let timeLeft = (s_h_srv.HistoryTimeLeft.lastGapClose - s_h_srv.HistoryTimeLeft.timeWhenStop)/speed;
-                eInfo.shist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
-            } 
-            else eInfo.shist = {style:"btn-success",text:"Fut H"};
-        }
-
-        toReturn.push(eInfo); 
+        res.json(toReturn);
     }
-
-    res.json(toReturn);
+    catch(er) {console.error(er);res.status(500).send("symbol_health");}
 });
 app.get("/pushservice",async(req,res)=>{
-    let srvName = req.query.srvname;
-    let symbolid = req.query.symbolid;
-    if(srvName=="trade") {
-        let symb = await DB.GetSymbolById(symbolid);
-        if(tSrvs.some(a=>a.Symbol.id==symbolid)){
-            tSrvs.find(a=>a.Symbol.id==symbolid).Stop();
-            tSrvs = tSrvs.filter(a=>a.Symbol.id!=symbolid);
+    try
+    {
+        let srvName = req.query.srvname;
+        let symbolid = req.query.symbolid;
+        if(srvName=="trade") {
+            let symb = await DB.GetSymbolById(symbolid);
+            if(tSrvs.some(a=>a.Symbol.id==symbolid)){
+                tSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                tSrvs = tSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let tS = new TradeUploadService(Market,DB,1000,symb);
+                tS.Start();
+                tSrvs.push(tS);
+            }
         }
-        else
-        {
-            let tS = new TradeUploadService(Market,DB,1000,symb);
-            tS.Start();
-            tSrvs.push(tS);
+        if(srvName=="hist") {
+            let symb = await DB.GetSymbolById(symbolid);
+            if(hSrvs.some(a=>a.Symbol.id==symbolid)){
+                hSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                hSrvs = hSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let hS = new HistUploadService(Market,DB,1000,symb);
+                hS.Start();
+                hSrvs.push(hS);
+            }
         }
+        res.sendStatus(200);
     }
-    if(srvName=="hist") {
-        let symb = await DB.GetSymbolById(symbolid);
-        if(hSrvs.some(a=>a.Symbol.id==symbolid)){
-            hSrvs.find(a=>a.Symbol.id==symbolid).Stop();
-            hSrvs = hSrvs.filter(a=>a.Symbol.id!=symbolid);
-        }
-        else
-        {
-            let hS = new HistUploadService(Market,DB,1000,symb);
-            hS.Start();
-            hSrvs.push(hS);
-        }
-    }
-    res.sendStatus(200);
+    catch(er) {console.error(er);res.status(500).send("pushservice");}
 });
 
 //renew coins
