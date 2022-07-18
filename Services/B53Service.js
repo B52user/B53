@@ -26,7 +26,7 @@ class B53Service
         B53Service.Srvs.push({name:this.Name,id:this.Service});
 	}
 	Stop() {
-        B53Service.Srvs = B52Service.Srvs.filter(a=>a.id!=this.Service);
+        B53Service.Srvs = B53Service.Srvs.filter(a=>a.id!=this.Service);
 		clearInterval(this.Service);
 	}
 }

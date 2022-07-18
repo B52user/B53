@@ -1,14 +1,15 @@
 const B53Service = require('./B53Service.js');
 
-class TradeUploadService {
+class InsterestUploadService {
     constructor(marketAdapter,dbAdapter,freq,symbol){
         this.freq = freq;
         this.Market = marketAdapter;
         this.DB = dbAdapter;
         this.Symbol = symbol;
-        this.ServiceName = "TradeUploadService_"+(this.Symbol.isfutures?"FUT":"SPOT")+"_"+this.Symbol.symbol;
+        //it always fut
+        this.ServiceName = "InsterestUploadService_"+this.Symbol.symbol;
         this.Service = null;
-        //this.HistoryTimeLeft = null;
+        this.HistoryTimeLeft = null;
         this.LastRealCandleTime = 0;
     }
     async Start(){
@@ -19,8 +20,6 @@ class TradeUploadService {
         //set method
         let that = this;
         this.Service.Actions.push(async()=>{
-            //refresh symol
-            that.Symbol = await that.DB.GetSymbolById(that.Symbol.id);
             try
             {
                 //console.log(this.ServiceName + " alive " + new Date().toLocaleTimeString());
@@ -45,12 +44,12 @@ class TradeUploadService {
             catch(err){
                 console.error(this.ServiceName + " lastTrades: ",err);
             }
-            /*
+
             try
             {
                 //now fill gaps
                 let tNow = await this.Market.BI.futures.time();
-                let fromTime = tNow.serverTime - 60*60*1000*that.Symbol.uploadhours;
+                let fromTime = tNow.serverTime - 60*60*1000*this.Symbol.uploadhours;
                 let gap = await that.DB.GetTradesGap(that.Market.Name,that.Symbol,fromTime);
                 
                 if(gap.to!=null)
@@ -109,7 +108,7 @@ class TradeUploadService {
             catch(err){
                 console.error(this.ServiceName + " historical Upload: ",err);
             }
-            */
+            
         });
         this.Service.Start();
     }
@@ -120,4 +119,4 @@ class TradeUploadService {
     }
 }
 
-module.exports = TradeUploadService;
+module.exports = InsterestUploadService;

@@ -3,6 +3,8 @@ const B53Settings = require('./B53Settings.js');
 const B53DBAdapter_PG = require('./Adapters/B53DBAdapter_PG.js');
 const B53MarketAdapter_Binance = require('./Adapters/B53MarketAdapter_Binance.js');
 const TradeUploadService = require('./Services/TradesUploadService.js');
+const HistUploadService = require('./Services/HistUploadService.js');
+
 const express = require('express');
 const {Client} = require('pg');
 const Binance = require('node-binance-api-ext');
@@ -23,6 +25,8 @@ const bi = Binance({
 //init Logic
 const DB = new B53DBAdapter_PG(pg_db);
 const Market = new B53MarketAdapter_Binance(bi);
+var tSrvs = [];
+var hSrvs = [];
 
 //start tradeupload
 /*
@@ -46,12 +50,14 @@ let tSrvs = [];
 //init routes
 app.use("/static",express.static("static"));
 app.get('/', function(req, res) {res.render("symbols");});
-app.get('/s_d', function(req, res) {res.render("symbol_dashboard");});
+app.get('/s_d', async(req, res) => {
+    let symbol = await DB.GetSymbolById(req.query.symbolid);
+    res.render("symbol_dashboard",{symbol:symbol});
+});
 app.get('/symbols', function(req, res) {
     //get data for it
     DB.GetActiveSymbols().then(r=>{
         //render
-        console.log(r);
         res.render("symbols",{
             rows:r
         });
@@ -61,21 +67,29 @@ app.get('/symbols', function(req, res) {
 
 //controllers
 app.get("/candles",async(req,res)=>{
-    //get vars
-    let market = req.query.market;
-    let from = req.query.from;
-    let to = req.query.to;
-    let time = req.query.time;
-    let symbol = req.query.symbol;
-    let isfutures = req.query.isfutures;
-    res.json(await DB.GetCandles(market,{isfutures:isfutures,symbol:symbol},time)); 
+    try
+    {
+        //get vars
+        let symbolid = req.query.symbolid;
+        let time = req.query.time;
+        let midnight = new Date();
+        midnight.setHours(0,0,0,0);
+        let theSymbol = await DB.GetSymbolById(symbolid);
+        let cdls = await DB.GetCandles(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
+        res.json(cdls); 
+    }
+    catch(er) {console.error(er);res.sendStatus(500).send("candles");}
 });
 app.get("/lastcandle",async(req,res)=>{
-    let market = req.query.market;
-    let symbol = req.query.symbol;
-    let isfutures = req.query.isfutures;
-    let time = req.query.time;
-    res.json(await DB.GetLastCandle(market,{isfutures:isfutures,symbol:symbol},time)); 
+    try
+        {
+        let symbolid = req.query.symbolid;
+        let time = req.query.time;
+        let symb = await DB.GetSymbolById(symbolid);
+        let ltc = await DB.GetLastCandle(symb.marketname,{isfutures:symb.isfutures,symbol:symb.symbol},time);
+        res.json(ltc); 
+    }
+    catch(er) {console.error(er);res.sendStatus(500).send("lastcandle");}
 });
 app.get("/html_options",async(req,res)=>{
     let type=req.query.type;
@@ -94,13 +108,98 @@ app.get("/html_options",async(req,res)=>{
     res.json(toReturn); 
 });
 app.post("/update",async(req,res)=>{
-    let table=req.query.table;
-    let id=req.query.id;
-    await DB.Update(table,id,req.body);
+    try
+    {
+        let table=req.query.table;
+        let id=req.query.id;
+        await DB.Update(table,id,req.body);
+        res.sendStatus(200);
+    }
+    catch(er) {console.error(er);res.sendStatus(500).send("lastcandle");}
+});
+app.post("/symbols_health",async(req,res)=>{
+    let symbolsArray = req.body;
+    let toReturn = [];
+    for(let s of symbolsArray)
+    {
+        let symba = await DB.GetSymbolById(s);
+        let eInfo = {sid:s};
+        let t_srv = tSrvs.find(a=>a.Symbol.id == s);
+        if(!t_srv) eInfo.real = {style:"btn-secondary",text:"Fut R Off"}
+        else {
+            if((new Date().getTime() - t_srv.LastRealCandleTime)<2000) eInfo.real = {style:"btn-success",text:"Fut R <2s"}
+            else if((new Date().getTime() - t_srv.LastRealCandleTime)<5000) eInfo.real = {style:"btn-warning",text:"Fut R <5s"}
+            else eInfo.real = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+        }
+
+        let h_srv = hSrvs.find(a=>a.Symbol.id == s);
+        if(!h_srv) eInfo.hist = {style:"btn-secondary",text:"Fut H Off"}
+        else {
+            if(h_srv.HistoryTimeLeft!=null) {
+                //calc time left
+                let speed = (h_srv.HistoryTimeLeft.lastGapStartFrom - h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - h_srv.HistoryTimeLeft.lastGapStartTime);
+                let timeLeft = (h_srv.HistoryTimeLeft.lastGapClose - h_srv.HistoryTimeLeft.timeWhenStop)/speed;
+                eInfo.hist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
+            } 
+            else eInfo.hist = {style:"btn-success",text:"Fut H"};
+        }
+
+        let s_t_srv = tSrvs.find(a=>a.Symbol.id == symba.pair);
+        if(!s_t_srv) eInfo.sreal = {style:"btn-secondary",text:"Fut R Off"}
+        else {
+            if((new Date().getTime() - s_t_srv.LastRealCandleTime)<2000) eInfo.sreal = {style:"btn-success",text:"Fut R <2s"}
+            else if((new Date().getTime() - s_t_srv.LastRealCandleTime)<5000) eInfo.sreal = {style:"btn-warning",text:"Fut R <5s"}
+            else eInfo.sreal = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - s_t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+        }
+
+        let s_h_srv = hSrvs.find(a=>a.Symbol.id == symba.pair);
+        if(!s_h_srv) eInfo.shist = {style:"btn-secondary",text:"Fut H Off"}
+        else {
+            if(s_h_srv.HistoryTimeLeft!=null) {
+                //calc time left
+                let speed = (s_h_srv.HistoryTimeLeft.lastGapStartFrom - s_h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - s_h_srv.HistoryTimeLeft.lastGapStartTime);
+                let timeLeft = (s_h_srv.HistoryTimeLeft.lastGapClose - s_h_srv.HistoryTimeLeft.timeWhenStop)/speed;
+                eInfo.shist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
+            } 
+            else eInfo.shist = {style:"btn-success",text:"Fut H"};
+        }
+
+        toReturn.push(eInfo); 
+    }
+
+    res.json(toReturn);
+});
+app.get("/pushservice",async(req,res)=>{
+    let srvName = req.query.srvname;
+    let symbolid = req.query.symbolid;
+    if(srvName=="trade") {
+        let symb = await DB.GetSymbolById(symbolid);
+        if(tSrvs.some(a=>a.Symbol.id==symbolid)){
+            tSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+            tSrvs = tSrvs.filter(a=>a.Symbol.id!=symbolid);
+        }
+        else
+        {
+            let tS = new TradeUploadService(Market,DB,1000,symb);
+            tS.Start();
+            tSrvs.push(tS);
+        }
+    }
+    if(srvName=="hist") {
+        let symb = await DB.GetSymbolById(symbolid);
+        if(hSrvs.some(a=>a.Symbol.id==symbolid)){
+            hSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+            hSrvs = hSrvs.filter(a=>a.Symbol.id!=symbolid);
+        }
+        else
+        {
+            let hS = new HistUploadService(Market,DB,1000,symb);
+            hS.Start();
+            hSrvs.push(hS);
+        }
+    }
     res.sendStatus(200);
 });
-
-
 
 //renew coins
 bi.futures.exchangeInfo().then(info=>{

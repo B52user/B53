@@ -1,61 +1,162 @@
 <div class="row">
-    <div class="col-1">
-        <select class="form-select form-select-sm" aria-label="Market">
-            <option selected>Market</option>
-            <option value="1">Binance</option>
-            <option value="2">FTX</option>
-      </select>
+    <div class="col-2 px-1">
+        <input class="form-control" list="b53_<%= symbol.id %>_spot_list" id="b53_<%= symbol.id %>_spotName" placeholder="Spot pair" value="<%= symbol.pairname %>">
+        <datalist id="b53_<%= symbol.id %>_spot_list">
+        </datalist>
     </div>
-    <div class="col-1"><input class="form-control form-control-sm" type="text" placeholder="Futures Name"></div>
-    <div class="col-1"><input class="form-control form-control-sm" type="text" placeholder="Spot Name"></div>
+    <div class="col-1 px-1">
+        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_<%= symbol.id %>_hours" value="<%= symbol.uploadhours %>">
+    </div>
+    <div class="col-1 px-1">
+        <input class="form-control" type="text" placeholder="Hours SPOT to upload history" id="b53_<%= symbol.id %>_hours2" value="<%= symbol.pair_uploadhours %>">
+    </div>
+    <div class="col-1 px-1">
+        <button class="btn btn-secondary btn-sm col-12 .b53symbolupdate" id="b53_<%= symbol.id %>_update">💾</button>
+    </div>
 </div>
-<div class="row">
-    <div class="col-11">
-        <div id="penisholder"></div>
+<div class="row mt-1">
+    <div class="col-4">
+        <div class="row">
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="14400000">4h</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="3600000">1h</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="1800000">30m</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="900000">15m</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="300000">5m</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="60000">1m</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="30000">30s</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="10000">10s</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="5000">5s</button>
+            </div>
+            <div class="col-1 px-1">
+                <button class="btn btn-secondary btn-sm col-12 b53timechange<%= symbol.id %> px-1" data-value="1000">1s</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-2" id="b53_<%= symbol.id %>_time" data-value="300000">
+    <div class="col-11 px-1">
+        <div id="penisholder_<%= symbol.id %>"></div>
     </div>
 </div>
 <script lang="js">
-    var chart = LightweightCharts.createChart(document.getElementById("penisholder"), {
-	width: 1200,
-    height: 600,
-	layout: {
-		backgroundColor: '#171B26',
-		textColor: 'rgba(255, 255, 255, 0.9)',
-	},
-	grid: {
-		vertLines: {
-			color: '#334158',
-		},
-		horzLines: {
-			color: '#334158',
-		},
-	},
-	crosshair: {
-		mode: LightweightCharts.CrosshairMode.Normal,
-	},
-	rightPriceScale: {
-		borderColor: '#485c7b',
-	},
-	timeScale: {
-		borderColor: '#485c7b',
-        timeVisible : true,
-        secondsVisible: true
-	},
-});
+var chart = null;
+var candleSeries = null;
 
-var candleSeries = chart.addCandlestickSeries({
-  upColor: '#26A69A',
-  downColor: '#EF5350',
-  borderDownColor: '#EF5350',
-  borderUpColor: '#26A69A',
-  wickDownColor: '#EF5350',
-  wickUpColor: '#26A69A',
-});
+function buildChart()
+{
+    chart = LightweightCharts.createChart(document.getElementById("penisholder_<%= symbol.id %>"), {
+        width: 1200,
+        height: 600,
+        layout: {
+            backgroundColor: '#171B26',
+            textColor: 'rgba(255, 255, 255, 0.9)',
+        },
+        grid: {
+            vertLines: {
+                color: '#334158',
+            },
+            horzLines: {
+                color: '#334158',
+            },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: '#485c7b',
+        },
+        timeScale: {
+            borderColor: '#485c7b',
+            timeVisible : true,
+            secondsVisible: true
+        },
+    });
 
-fetch("/candles?market=binance&time=300000&symbol=API3USDT&isfutures=true")
-.then(res=>res.json())
-.then(j=>{
-    candleSeries.setData(j);
-});
+    candleSeries = chart.addCandlestickSeries({
+    upColor: '#26A69A',
+    downColor: '#EF5350',
+    borderDownColor: '#EF5350',
+    borderUpColor: '#26A69A',
+    wickDownColor: '#EF5350',
+    wickUpColor: '#26A69A',
+    });
 
+    fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
+    .then(res=>res.json())
+    .then(j=>{
+        candleSeries.setData(j);
+    });
+}
+
+$(()=>{
+    buildChart();
+
+    $("#b53_<%= symbol.id %>_update").on("mouseup",(e)=>{
+        //save changes
+        console.log("!ATTAK!");
+        let spotid = $(`#b53_<%= symbol.id %>_spot_list option[value='${$("#b53_<%= symbol.id %>_spotName").val()}']`).attr('data-value');
+        let hrs = $('#b53_<%= symbol.id %>_hours').val();
+        let hrs2 = $('#b53_<%= symbol.id %>_hours2').val();
+        fetch("/update?table=dbo.b53symbols&id=<%= symbol.id %>",{method:'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body:JSON.stringify([
+                    {name:"pair",value:spotid},
+                    {name:"uploadhours",value:hrs},
+                    {name:"pair_uploadhours",value:hrs2},
+                ])}).then(()=>{
+                    //close done
+                    
+            }).catch((er) => {
+                console.warn(er);
+            });
+    });
+    $(".b53timechange<%= symbol.id %>").on("mouseup",(e)=>{
+        $("#b53_<%= symbol.id %>_time").attr("data-value",$(e.target).attr("data-value"));
+        fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
+            .then(res=>res.json())
+            .then(j=>{
+                candleSeries.setData(j);
+            });
+    });
+    //add options
+    
+    fetch("/html_options?type=symbols&isfutures=false&unmain=true&market=<%= symbol.marketname %>")
+            .then((r) => r.json())
+            .then((h) => {
+                $("#b53_<%= symbol.id %>_spot_list").html(
+                    h.map(e=>`<option data-value='${e.value}' value='${e.name}'>`).join('')
+                );
+            })
+            .catch((er) => {
+                console.warn(er);
+            });
+
+    setInterval(()=>{
+        //get latest candle and update
+        fetch(`/lastcandle?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
+        .then(res=>res.json())
+        .then(j=>{
+            candleSeries.update(j);
+        });
+    },500);
+})
 </script>

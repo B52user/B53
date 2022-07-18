@@ -43,6 +43,7 @@ class B53DBAdapter_PG
         let toReturn = {to:null};
         if(resTo.rowCount==1) {
             toReturn.to = resTo.rows[0].id;
+            toReturn.toTime = resTo.rows[0].time;
             let resFrom = await this.DB.query(SQL.SELECT.SELECT_Trades_GetGapFrom(tableName,from,toReturn.to));
             if(resFrom.rowCount==1){
                 toReturn.from = resFrom.rows[0].id;
@@ -56,15 +57,15 @@ class B53DBAdapter_PG
         if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
 
         for (const t of trades) {
-            await this.DB.query(Queries_Trades.InsertTrade(tableName,t));
+            await this.DB.query(SQL.INSERT.INSERT_Trade(tableName,t));
         }
     }
-    async GetCandles(marketName,symbol,timeMS) {
+    async GetCandles(marketName,symbol,timeMS,timeFrom=null) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
         if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
 
-        let candleRequest = await this.DB.query(SQL.SELECT.SELECT_Trades_GetCandles(tableName,timeMS));
+        let candleRequest = await this.DB.query(SQL.SELECT.SELECT_Trades_GetCandles(tableName,timeMS,timeFrom));
         let toReturn = [];
         candleRequest.rows.forEach((r)=>{
             toReturn.push({
@@ -76,6 +77,21 @@ class B53DBAdapter_PG
             });
         });
         return toReturn;
+    }
+
+    async GetLastCandle(marketName,symbol,timeMS) {
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
+
+        let candle = (await this.DB.query(SQL.SELECT.SELECT_Trades_GetLastCandle(tableName,timeMS))).rows[0];
+        return {
+                time: candle.candletime, 
+                open: parseFloat(candle.startprice), 
+                high: parseFloat(candle.maxshadow), 
+                low: parseFloat(candle.minshadow), 
+                close: parseFloat(candle.endprice)
+        };
     }
 
     async InsertUpdateSymbols(marketName,symbolsInfo) {
@@ -105,6 +121,37 @@ class B53DBAdapter_PG
         let query = `select a.* from dbo.b53symbols a where a.ismainlist=true order by a.symbol asc`;
         let res = await this.DB.query(query);
         return res.rows;
+    }
+
+    async GetSymbolById(id){
+        let query = `
+        select
+            b.name as marketname,
+            c.symbol as pairname,
+            a.*
+        from dbo.b53symbols a inner join dbo.b53markets b
+        on a.market = b.id
+        left join dbo.b53symbols c on a.pair = c.id
+        where a.id = ${id};
+        `;
+        let res = await this.DB.query(query);
+        return res.rows[0];
+    }
+
+    async GetLastTrade(marketName,symbol){
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
+        let lastTrade = await this.DB.query(`
+            select *
+            from dbo.${tableName}
+            order by id desc
+            limit 1
+        `);
+        if(lastTrade.rowCount==0) return {
+            id:0
+        };
+        return lastTrade.rows[0];
     }
     
 }

@@ -30,45 +30,74 @@ const SQL = {
             order by a.id desc
             limit 1
         `,
-        SELECT_Trades_GetCandles: (tableName,timeFrameMS) => `
-            with b as(
+        SELECT_Trades_GetLastCandle:(tableName,timeFrameMS) => `
+            with ctime as(
                 select 
-                    CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candleTime, 
+                    CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candletime, 
                     a.id,
                     a.buy,
                     a.price,
                     a."time" 
                 from dbo.${tableName} a
-                order by 1,2 asc
-            ),
-            c as(
-            select distinct 
-                    x.candleTime,
-                    x.maxShadow,
-                    x.minShadow,
-                    y.price as endPrice,
-                    z.price as startPrice
-                from 
-                    (select
-                        distinct 
-                        b.candleTime,
-                        max(b.price) as maxShadow,
-                        min(b.price) as minShadow,
-                        max(b.id) as endId,
-                        min(b.id) as startId
-                    from b
-                    group by b.candleTime) x
-                    left join b y on x.endId = y.id
-                    left join b z on x.startId = z.id
-                order by x.candleTime asc
+                order by a.id desc limit 10000
+                ), candle as(
+                select
+                    a.candletime,
+                    max(a.id) as endid,
+                    min(a.id) as startid,
+                    max(a.price) as maxshadow,
+                    min(a.price) as minshadow
+                from ctime a
+                where a.candletime = (select max(candletime) from ctime)
+                group by a.candletime
+                )
+                select 
+                    a.candletime,
+                    a.maxshadow,
+                    a.minshadow,
+                    b.price as startprice,
+                    c.price as endprice
+                from candle a left join ctime b on a.startid=b.id left join ctime c on a.endid = c.id
+        `,
+        SELECT_Trades_GetCandles: (tableName,timeFrameMS,timeFrom=null) => `
+        with ctime as(
+            select 
+                distinct
+                CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candletime, 
+                a.id,
+                a.buy,
+                a.price,
+                a."time" 
+            from dbo.${tableName} a
+            ${(timeFrom==null?"":"where a.time>"+timeFrom)}
+            order by a.id desc
+            ), precandle as(
+            select
+                a.candletime,
+                max(a.price) as maxShadow,
+                min(a.price) as minShadow,
+                max(a.id) as endid,
+                min(a.id) as startid
+            from ctime a
+            group by a.candleTime
+            ), candle as(
+            select
+                a.candletime,
+                a.maxShadow,
+                a.minShadow,
+                b.price as endprice,
+                c.price as startprice
+            from precandle a left join ctime b on a.endid = b.id
+            left join ctime c on a.startid = c.id
             )
             select 
-            n.candletime,
-            n.maxshadow,
-            n.minshadow,
-            n.endprice,
-            coalesce(m.endprice,n.startprice) as startprice
-            from c n left join c m on n.candletime = (m.candletime-${timeFrameMS/1000})
+                a.candletime,
+                a.maxshadow,
+                a.minshadow,
+                a.endprice,
+                coalesce(b.endprice,a.startprice) as startprice
+            from candle a left join candle b on b.candletime = (a.candletime-${timeFrameMS/1000})
+            order by 1 asc
             `
     },
     INSERT:{
