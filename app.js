@@ -78,12 +78,46 @@ app.get("/candles",async(req,res)=>{
         }
         let midnight = new Date();
         midnight.setHours(0,0,0,0);
+        midnight.setDate(midnight.getDate()-1);
         let theSymbol = await DB.GetSymbolById(symbolid);
         let cdls = await DB.GetCandles(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
         res.json(cdls); 
     }
     catch(er) {console.error(er);res.status(500).send("candles");}
 });
+app.get("/indicator",async(req,res)=>{
+    try
+    {
+        //get vars
+        let symbolid = req.query.symbolid;
+        let time = req.query.time;
+        let type = req.query.type;
+        if(symbolid=="undefined"||time=="undefined"||type=="undefined") {
+            res.status(500).send(`symbolid=${symbolid},time=${time}`);
+            return;
+        }
+        let midnight = new Date();
+        midnight.setHours(0,0,0,0);
+        midnight.setDate(midnight.getDate()-1);
+        if(type=="volume")
+        {
+            let theSymbol = await DB.GetSymbolById(symbolid);
+            let cdls = await DB.GetIndicator_Volume(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
+            res.json(cdls); 
+            return;
+        }
+        if(type=="sellvolume")
+        {
+            let theSymbol = await DB.GetSymbolById(symbolid);
+            let cdls = await DB.GetIndicator_SellVolume(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
+            res.json(cdls); 
+            return;
+        }
+        res.sendStatus(200);
+    }
+    catch(er) {console.error(er);res.status(500).send("candles");}
+});
+
 app.get("/lastcandle",async(req,res)=>{
     try
     {

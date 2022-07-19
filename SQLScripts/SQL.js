@@ -98,7 +98,43 @@ const SQL = {
                 coalesce(b.endprice,a.startprice) as startprice
             from candle a left join candle b on b.candletime = (a.candletime-${timeFrameMS/1000})
             order by 1 asc
-            `
+            `,
+        SELECT_Trades_GetVolumes: (tableName,timeFrameMS,timeFrom=null) => `
+        with ctime as(
+            select 
+                distinct
+                CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candletime, 
+                a.quantity,
+				a.id
+            from dbo.${tableName} a
+            ${(timeFrom==null?"":"where a.time>"+timeFrom)}
+            order by a.id desc
+            )
+            select 
+                a.candletime,
+                sum(a.quantity) as volume
+            from ctime a 
+            group by a.candletime
+            order by 1 asc
+            `,
+        SELECT_Trades_GetSellVolumes: (tableName,timeFrameMS,timeFrom=null) => `
+            with ctime as(
+                select 
+                    distinct
+                    CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candletime, 
+                    a.quantity,
+                    a.id
+                from dbo.${tableName} a
+                where a.buy = false ${(timeFrom==null?"":" and a.time>"+timeFrom)}
+                order by a.id desc
+                )
+                select 
+                    a.candletime,
+                    sum(a.quantity) as volume
+                from ctime a 
+                group by a.candletime
+                order by 1 asc
+                `,
     },
     INSERT:{
         INSERT_Default_Market:`

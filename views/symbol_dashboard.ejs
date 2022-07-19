@@ -56,61 +56,170 @@
     </div>
 </div>
 <script lang="js">
-var chart = null;
-var candleSeries = null;
-
-function buildChart()
-{
-    chart = LightweightCharts.createChart(document.getElementById("penisholder_<%= symbol.id %>"), {
-        width: 1200,
-        height: 600,
-        layout: {
-            backgroundColor: '#171B26',
-            textColor: 'rgba(255, 255, 255, 0.9)',
-        },
-        grid: {
-            vertLines: {
-                color: '#334158',
+    "<%= symbol.id %>";
+var megaChart<%= symbol.id %> = {
+    id:"<%= symbol.id %>",
+    chart:null,
+    series:[],
+    rclick:false,
+    buildChart: ()=>{
+            megaChart<%= symbol.id %>.chart = LightweightCharts.createChart(document.getElementById("penisholder_<%= symbol.id %>"), {
+            width: 1200,
+            height: 600,
+            layout: {
+                backgroundColor: '#171B26',
+                textColor: 'rgba(255, 255, 255, 0.9)',
             },
-            horzLines: {
-                color: '#334158',
+            grid: {
+                vertLines: {
+                    color: '#334158',
+                },
+                horzLines: {
+                    color: '#334158',
+                },
             },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        rightPriceScale: {
-            borderColor: '#485c7b',
-        },
-        timeScale: {
-            borderColor: '#485c7b',
-            timeVisible : true,
-            secondsVisible: true
-        },
-    });
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#485c7b',
+            },
+            timeScale: {
+                borderColor: '#485c7b',
+                timeVisible : true,
+                secondsVisible: true
+            },
+            watermark: {
+                text: "<%= symbol.symbol %>",
+                fontSize: 128,
+                color: "rgba(256, 256, 256, 0.05)",
+                visible: true
+            }
+        });
 
-    candleSeries = chart.addCandlestickSeries({
-        upColor: '#26A69A',
-        downColor: '#EF5350',
-        borderDownColor: '#EF5350',
-        borderUpColor: '#26A69A',
-        wickDownColor: '#EF5350',
-        wickUpColor: '#26A69A',
-        priceFormat: {
-            type: 'price',
-            minMove: parseFloat("<%= symbol.mintick %>").toFixed(<%= symbol.tickprecision %>+1)
-        }
-    });
+        //build main candles
+        megaChart<%= symbol.id %>.buildCanldleSeria({
+                upColor: '#26A69A',
+                downColor: '#EF5350',
+                borderDownColor: '#EF5350',
+                borderUpColor: '#26A69A',
+                wickDownColor: '#EF5350',
+                wickUpColor: '#26A69A',
+                priceFormat: {
+                    type: 'price',
+                    minMove: parseFloat("<%= symbol.mintick %>").toFixed(<%= symbol.tickprecision %>+1)
+                }
+            },
+            (can)=>{
+                fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.setData(j);
+                    });
+            },
+            (can)=>{
+                //get latest candle and update
+                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
+                if(!tima) return;
+                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
+                .then(res=>res.json())
+                .then(j=>{
+                    can.update(j);
+                });
+            }
+        );
 
-    fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
-    .then(res=>res.json())
-    .then(j=>{
-        candleSeries.setData(j);
-    });
-}
+        //build volume
+        megaChart<%= symbol.id %>.buildHistSeria(
+            {
+                color: "rgba(107, 255, 193, 0.5)",
+                lineWidth: 2,
+                priceFormat: {
+                    type: "volume"
+                },
+                overlay: true,
+                scaleMargins: {
+                    top: 0.8,
+                    bottom: 0
+                }
+            },
+            (can)=>{
+                fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=volume`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.setData(j);
+                    });
+            },
+            (can)=>{
+                /*
+                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
+                if(!tima) return;
+                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.update(j);
+                });
+                */
+            }
+        );
+
+        //build sell volume
+        megaChart<%= symbol.id %>.buildHistSeria(
+            {
+                color: "rgba(255, 128, 159, 0.5)",
+                lineWidth: 2,
+                priceFormat: {
+                    type: "volume"
+                },
+                overlay: true,
+                scaleMargins: {
+                    top: 0.8,
+                    bottom: 0
+                }
+            },
+            (can)=>{
+                fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=sellvolume`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.setData(j);
+                    });
+            },
+            (can)=>{
+                /*
+                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
+                if(!tima) return;
+                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.update(j);
+                });
+                */
+            }
+        );
+    },
+    buildCanldleSeria: (seria,funcToData,funcToRenew)=>{
+        let chartSeria = megaChart<%= symbol.id %>.chart.addCandlestickSeries(seria);
+        let newseria = {
+            seria:chartSeria,
+            setdata: ()=> {funcToData(chartSeria);},
+            newdata: ()=> {funcToRenew(chartSeria);}
+        };
+        megaChart<%= symbol.id %>.series.push(newseria);
+    },
+    buildHistSeria: (seria,funcToData,funcToRenew)=>{
+        let chartSeria = megaChart<%= symbol.id %>.chart.addHistogramSeries(seria);
+        let newseria = {
+            seria:chartSeria,
+            setdata: ()=> {funcToData(chartSeria);},
+            newdata: ()=> {funcToRenew(chartSeria);}
+        };
+        megaChart<%= symbol.id %>.series.push(newseria);
+    }
+};
+
 
 $(()=>{
-    buildChart();
+    megaChart<%= symbol.id %>.buildChart();
 
     $("#b53_<%= symbol.id %>_update").on("mouseup",(e)=>{
         //save changes
@@ -132,13 +241,13 @@ $(()=>{
                 console.warn(er);
             });
     });
+    
     $(".b53timechange<%= symbol.id %>").on("mouseup",(e)=>{
         $("#b53_<%= symbol.id %>_time").attr("data-value",$(e.target).attr("data-value"));
-        fetch(`/candles?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>`)
-            .then(res=>res.json())
-            .then(j=>{
-                candleSeries.setData(j);
-            });
+        
+        megaChart<%= symbol.id %>.series.forEach(s=>{
+            s.setdata();
+        });
     });
     //add options
     
@@ -154,14 +263,44 @@ $(()=>{
             });
 
     setInterval(()=>{
-        //get latest candle and update
-        let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
-        if(!tima) return;
-        fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
-        .then(res=>res.json())
-        .then(j=>{
-            candleSeries.update(j);
+        megaChart<%= symbol.id %>.series.forEach(s=>{
+            s.newdata();
         });
     },500);
+
+    megaChart<%= symbol.id %>.series.forEach(s=>{
+            s.setdata();
+        });
+    
+    //"penisholder_<%= symbol.id %>"
+    $("#penisholder_<%= symbol.id %>").find("canvas").on("contextmenu",(e)=>{return false;});
+    $("#penisholder_<%= symbol.id %>").find("canvas").on("mousedown",(e)=>{
+        if(e.which==3)
+        {
+            //start dragging
+            console.log("start left drag");
+            megaChart<%= symbol.id %>.rclick = true;
+        }
+        
+    });
+    $("#penisholder_<%= symbol.id %>").find("canvas").on("mouseup",(e)=>{
+        if(e.which==3)
+        {
+            //start dragging
+            console.log("stop left drag");
+            megaChart<%= symbol.id %>.rclick = false;
+        }
+        
+    });
+    megaChart<%= symbol.id %>.chart.subscribeCrosshairMove((p)=>{
+        if(!p.point||!megaChart<%= symbol.id %>.rclick) return;
+        console.log(megaChart<%= symbol.id %>.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct.Ai);
+    });
+    //$('body').on('contextmenu', '#myCanvas', function(e){ return false; });
+    //var megaPr = megaChart141.series[0].seria.createPriceLine({
+    //    price:1.98
+    //});
+    // megaPr.Lr.uh.ni.ii
+    //megaChart141.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct
 })
 </script>
