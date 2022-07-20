@@ -135,6 +135,23 @@ const SQL = {
                 group by a.candletime
                 order by 1 asc
                 `,
+        SELECT_Trades_GetFreq: (tableName,timeFrameMS,timeFrom=null) => `
+            with ctime as(
+                select 
+                    distinct
+                    CEIL(a."time"/${timeFrameMS})*${timeFrameMS/1000} as candletime, 
+                    a.id
+                from dbo.${tableName} a
+                 ${(timeFrom==null?"":"where a.time>"+timeFrom)}
+                order by a.id desc
+                )
+                select 
+                    a.candletime,
+                    count(a.id) as countdown
+                from ctime a 
+                group by a.candletime
+                order by 1 asc
+                `,
     },
     INSERT:{
         INSERT_Default_Market:`

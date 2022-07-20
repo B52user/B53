@@ -113,6 +113,13 @@ app.get("/indicator",async(req,res)=>{
             res.json(cdls); 
             return;
         }
+        if(type=="tradefreq")
+        {
+            let theSymbol = await DB.GetSymbolById(symbolid);
+            let cdls = await DB.GetIndicator_TradeFreq(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
+            res.json(cdls); 
+            return;
+        }
         res.sendStatus(200);
     }
     catch(er) {console.error(er);res.status(500).send("candles");}

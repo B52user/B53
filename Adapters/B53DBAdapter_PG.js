@@ -111,6 +111,22 @@ class B53DBAdapter_PG
         return toReturn;
     }
 
+    async GetIndicator_TradeFreq(marketName,symbol,timeMS,timeFrom=null) {
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
+
+        let candleRequest = await this.DB.query(SQL.SELECT.SELECT_Trades_GetFreq(tableName,timeMS,timeFrom));
+        let toReturn = [];
+        candleRequest.rows.forEach((r)=>{
+            toReturn.push({
+                time: r.candletime, 
+                value: parseInt(r.countdown)
+            });
+        });
+        return toReturn;
+    }
+
     async GetLastCandle(marketName,symbol,timeMS) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);

@@ -55,13 +55,30 @@
         <div id="penisholder_<%= symbol.id %>"></div>
     </div>
 </div>
+
 <script lang="js">
-    "<%= symbol.id %>";
+var rec1html<%= symbol.id %> = `
+    <div class="fw-bold fs-5" id="b53_<%= symbol.id %>_percent_box" style="position:absolute; border:1px solid #0000008a;background-color:#00000087;width:60px;height:25px;display:none;z-index:1000;top:0px;left:0px;text-align:center;">
+        0
+    </div>
+    `;
+var rec2html<%= symbol.id %> = `
+    <div class="fw-bold fs-5" id="b53_<%= symbol.id %>_percent_box2" style="position:absolute; border:1px solid #0000008a;background-color:#00000087;width:1px;height:1px;display:none;z-index:1000;top:0px;left:0px;text-align:center;">
+        Test
+    </div>
+    `;
 var megaChart<%= symbol.id %> = {
     id:"<%= symbol.id %>",
     chart:null,
     series:[],
     rclick:false,
+    rec:{
+        juststarted:false,
+        startX:0,
+        startY:0,
+        startPrice:0,
+        startTime:0
+    },
     buildChart: ()=>{
             megaChart<%= symbol.id %>.chart = LightweightCharts.createChart(document.getElementById("penisholder_<%= symbol.id %>"), {
             width: 1200,
@@ -90,11 +107,14 @@ var megaChart<%= symbol.id %> = {
                 secondsVisible: true
             },
             watermark: {
-                text: "<%= symbol.symbol %>",
-                fontSize: 128,
+                text: "5m <%= symbol.symbol %>",
+                fontSize: 68,
                 color: "rgba(256, 256, 256, 0.05)",
-                visible: true
-            }
+                visible: true,
+                horzAlign: 'left',
+                vertAlign: 'top',
+            },
+            pane:0
         });
 
         //build main candles
@@ -141,7 +161,10 @@ var megaChart<%= symbol.id %> = {
                 scaleMargins: {
                     top: 0.8,
                     bottom: 0
-                }
+                },
+                lastValueVisible:false,
+                title:"Volume",
+                priceLineVisible:false,
             },
             (can)=>{
                 fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=volume`)
@@ -166,7 +189,7 @@ var megaChart<%= symbol.id %> = {
         //build sell volume
         megaChart<%= symbol.id %>.buildHistSeria(
             {
-                color: "rgba(255, 128, 159, 0.5)",
+                color: "rgba(255, 128, 159, 0.7)",
                 lineWidth: 2,
                 priceFormat: {
                     type: "volume"
@@ -175,7 +198,9 @@ var megaChart<%= symbol.id %> = {
                 scaleMargins: {
                     top: 0.8,
                     bottom: 0
-                }
+                },
+                lastValueVisible: false,
+                priceLineVisible: false,
             },
             (can)=>{
                 fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=sellvolume`)
@@ -196,6 +221,43 @@ var megaChart<%= symbol.id %> = {
                 */
             }
         );
+        
+        //tradefreq
+        
+        megaChart<%= symbol.id %>.buildHistSeria(
+            {
+                color: "rgba(255, 147, 203, 0.8)",
+                lineWidth: 2,
+                title:"Trade Freq",
+                priceFormat: {
+                    type: "volume"
+                },
+                overlay: true,
+                lastValueVisible:false,
+                title:"Freq",
+                priceLineVisible:false,
+                pane:1
+            },
+            (can)=>{
+                fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=tradefreq`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.setData(j);
+                    });
+            },
+            (can)=>{
+                /*
+                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
+                if(!tima) return;
+                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
+                    .then(res=>res.json())
+                    .then(j=>{
+                        can.update(j);
+                });
+                */
+            }
+        );
+        
     },
     buildCanldleSeria: (seria,funcToData,funcToRenew)=>{
         let chartSeria = megaChart<%= symbol.id %>.chart.addCandlestickSeries(seria);
@@ -244,7 +306,9 @@ $(()=>{
     
     $(".b53timechange<%= symbol.id %>").on("mouseup",(e)=>{
         $("#b53_<%= symbol.id %>_time").attr("data-value",$(e.target).attr("data-value"));
-        
+        $(".b53timechange<%= symbol.id %>").removeClass("border-2").removeClass("border-danger");
+        $(e.target).addClass("border-2").addClass("border-danger");
+        megaChart<%= symbol.id %>.chart.options().watermark.text = $(e.target).text() + " <%= symbol.symbol %>"; 
         megaChart<%= symbol.id %>.series.forEach(s=>{
             s.setdata();
         });
@@ -267,6 +331,11 @@ $(()=>{
             s.newdata();
         });
     },500);
+    setInterval(()=>{
+        megaChart<%= symbol.id %>.series.forEach(s=>{
+            s.setdata();
+        });
+    },60000);
 
     megaChart<%= symbol.id %>.series.forEach(s=>{
             s.setdata();
@@ -278,8 +347,8 @@ $(()=>{
         if(e.which==3)
         {
             //start dragging
-            console.log("start left drag");
             megaChart<%= symbol.id %>.rclick = true;
+            megaChart<%= symbol.id %>.rec.juststarted = true;
         }
         
     });
@@ -287,20 +356,65 @@ $(()=>{
         if(e.which==3)
         {
             //start dragging
-            console.log("stop left drag");
+            let p_box = document.getElementById("b53_<%= symbol.id %>_percent_box");
+            let p_box2 = document.getElementById("b53_<%= symbol.id %>_percent_box2");
             megaChart<%= symbol.id %>.rclick = false;
+            megaChart<%= symbol.id %>.rec.startX = 0;
+            megaChart<%= symbol.id %>.rec.startY = 0;
+            megaChart<%= symbol.id %>.rec.startPrice = 0;
+            megaChart<%= symbol.id %>.rec.startTime = 0;
+            megaChart<%= symbol.id %>.rec.juststarted = false;
+            p_box.style.display = "none";
+            p_box2.style.display = "none";
         }
         
     });
     megaChart<%= symbol.id %>.chart.subscribeCrosshairMove((p)=>{
         if(!p.point||!megaChart<%= symbol.id %>.rclick) return;
-        console.log(megaChart<%= symbol.id %>.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct.Ai);
+        let currPrice = megaChart<%= symbol.id %>.chart.Ec.ri.A.Mi;
+        let p_box = document.getElementById("b53_<%= symbol.id %>_percent_box");
+        let p_box2 = document.getElementById("b53_<%= symbol.id %>_percent_box2");
+        let ph_p = $("#penisholder_<%= symbol.id %>").offset();
+        let x = ph_p.left + p.point.x;
+        let y = ph_p.top + p.point.y;
+        if(megaChart<%= symbol.id %>.rec.juststarted)
+        {
+            megaChart<%= symbol.id %>.rec.startX = x;
+            megaChart<%= symbol.id %>.rec.startY = y;
+            megaChart<%= symbol.id %>.rec.startPrice = currPrice;
+            megaChart<%= symbol.id %>.rec.startTime = p.time;
+            megaChart<%= symbol.id %>.rec.juststarted = false;
+            p_box.style.display = "block";
+            p_box2.style.display = "block";
+        }
+        //get penisholder position
+        $(p_box).css({ left: x + 10, top: y - 30 });
+        let diffX = megaChart<%= symbol.id %>.rec.startX - x;
+        let diffY = megaChart<%= symbol.id %>.rec.startY - y;
+        let w = Math.abs(diffX) - 2;
+        let h = Math.abs(diffY) - 2;
+        let b2x = (diffX<0)?megaChart<%= symbol.id %>.rec.startX:x+2;
+        let b2y = (diffY<0)?megaChart<%= symbol.id %>.rec.startY:y+2;
+        $(p_box2).css({ left: b2x, top: b2y, width:w, height:h });
+        //percent 
+        let perc = 100*Math.abs(currPrice - megaChart<%= symbol.id %>.rec.startPrice)/megaChart<%= symbol.id %>.rec.startPrice;
+        $(p_box).text(perc.toFixed(2)+"%");
+        //console.log(p);
+        //console.log(currPrice);
+        //console.log(megaChart<%= symbol.id %>.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct.Ai);
+        //console.log(megaChart<%= symbol.id %>.rec);
     });
+    $("body").append(rec1html<%= symbol.id %>);
+    $("body").append(rec2html<%= symbol.id %>);
+    $("#b53_<%= symbol.id %>_percent_box").on("contextmenu",(e)=>{return false;});
+    $("#b53_<%= symbol.id %>_percent_box2").on("contextmenu",(e)=>{return false;});
+    //rec1html<%= symbol.id %>
     //$('body').on('contextmenu', '#myCanvas', function(e){ return false; });
     //var megaPr = megaChart141.series[0].seria.createPriceLine({
     //    price:1.98
     //});
     // megaPr.Lr.uh.ni.ii
     //megaChart141.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct
+    //megaChart113.chart.Ec.ri.A.Mi
 })
 </script>
