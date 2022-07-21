@@ -126,7 +126,26 @@ class B53DBAdapter_PG
         });
         return toReturn;
     }
+    async GetIndicator_VirtVolume(marketName,symbol,fromTimeCandle,toTimeCandle,fromPrice,toPrice,priceTick,precision) {
+        let tableName = this._db_trade_table(marketName,symbol);
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolTrade(tableName));}
 
+        let candleRequest = (await this.DB.query(SQL.SELECT.SELECT_Trades_VertVolume(tableName,fromTimeCandle,toTimeCandle,fromPrice,toPrice))).rows;
+        let candlesConverted = candleRequest.map(a=>({price:parseFloat(a.price).toFixed(precision),volume:parseFloat(a.volume)}));
+        let volmax = Math.max(...candlesConverted.map(a=>a.volume));
+        let toReturn = [];
+        for(let i=parseFloat(fromPrice);i<=parseFloat(toPrice);i=i+parseFloat(priceTick)) {
+            let currVolO = candlesConverted.find(a=>a.price==i.toFixed(precision));
+            let currVol = currVolO?currVolO.volume:0;
+            if(!currVol) currVol = 0;
+            toReturn.push({
+                price:i.toFixed(precision),
+                prec:100-(Math.round(100*currVol/volmax))
+            });
+        }
+        return toReturn;
+    }
     async GetLastCandle(marketName,symbol,timeMS) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);

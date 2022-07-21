@@ -99,24 +99,46 @@ app.get("/indicator",async(req,res)=>{
         let midnight = new Date();
         midnight.setHours(0,0,0,0);
         midnight.setDate(midnight.getDate()-1);
+        let theSymbol = await DB.GetSymbolById(symbolid);
         if(type=="volume")
         {
-            let theSymbol = await DB.GetSymbolById(symbolid);
             let cdls = await DB.GetIndicator_Volume(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
             res.json(cdls); 
             return;
         }
         if(type=="sellvolume")
         {
-            let theSymbol = await DB.GetSymbolById(symbolid);
             let cdls = await DB.GetIndicator_SellVolume(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
             res.json(cdls); 
             return;
         }
         if(type=="tradefreq")
         {
-            let theSymbol = await DB.GetSymbolById(symbolid);
             let cdls = await DB.GetIndicator_TradeFreq(theSymbol.marketname,{isfutures:theSymbol.isfutures,symbol:theSymbol.symbol},time,midnight.getTime());
+            res.json(cdls); 
+            return;
+        }
+        if(type=="vertvolume")
+        {
+            let fromTimeCandle = req.query.fromtime;
+            let toTimeCandle = req.query.totime;
+            let tickPrec = parseInt(theSymbol.tickprecision)+1;
+            let fromPrice = parseFloat(req.query.fromprice).toFixed(tickPrec);
+            let toPrice = parseFloat(req.query.toprice).toFixed(tickPrec);
+            let priceTick = parseFloat(theSymbol.mintick);
+            let cdls = await DB.GetIndicator_VirtVolume(
+                theSymbol.marketname,
+                {
+                    isfutures:theSymbol.isfutures,
+                    symbol:theSymbol.symbol
+                },
+                fromTimeCandle,
+                toTimeCandle,
+                fromPrice,
+                toPrice,
+                priceTick,
+                tickPrec
+                );
             res.json(cdls); 
             return;
         }

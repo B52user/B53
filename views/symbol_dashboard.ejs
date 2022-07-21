@@ -64,9 +64,10 @@ var rec1html<%= symbol.id %> = `
     `;
 var rec2html<%= symbol.id %> = `
     <div class="fw-bold fs-5" id="b53_<%= symbol.id %>_percent_box2" style="position:absolute; border:1px solid #0000008a;background-color:#00000087;width:1px;height:1px;display:none;z-index:1000;top:0px;left:0px;text-align:center;">
-        Test
+        
     </div>
     `;
+var chartline<%= symbol.id %> = (perc,height) => `<div style="width:80%;height:${height}px;display:block;float:right;max-width:100px;clear:both;background-image:linear-gradient(to right, transparent ${perc}%, #375fff82 ${perc}%)"></div>`;
 var megaChart<%= symbol.id %> = {
     id:"<%= symbol.id %>",
     chart:null,
@@ -355,7 +356,7 @@ $(()=>{
     $("#penisholder_<%= symbol.id %>").find("canvas").on("mouseup",(e)=>{
         if(e.which==3)
         {
-            //start dragging
+            //stop dragging
             let p_box = document.getElementById("b53_<%= symbol.id %>_percent_box");
             let p_box2 = document.getElementById("b53_<%= symbol.id %>_percent_box2");
             megaChart<%= symbol.id %>.rclick = false;
@@ -366,6 +367,12 @@ $(()=>{
             megaChart<%= symbol.id %>.rec.juststarted = false;
             p_box.style.display = "none";
             p_box2.style.display = "none";
+            if(megaChart<%= symbol.id %>.rec.bars!=null) 
+            {
+                clearInterval(megaChart<%= symbol.id %>.rec.bars);
+                megaChart<%= symbol.id %>.rec.bars = null;
+            }
+            $("#b53_<%= symbol.id %>_percent_box2").html("");
         }
         
     });
@@ -386,6 +393,15 @@ $(()=>{
             megaChart<%= symbol.id %>.rec.juststarted = false;
             p_box.style.display = "block";
             p_box2.style.display = "block";
+            if(megaChart<%= symbol.id %>.rec.bars!=null) 
+            {
+                clearInterval(megaChart<%= symbol.id %>.rec.bars);
+                megaChart<%= symbol.id %>.rec.bars = null;
+            }
+            megaChart<%= symbol.id %>.rec.bars = setInterval(()=>{megaChart<%= symbol.id %>.rec.buildbars = true;},1500);
+            
+            
+
         }
         //get penisholder position
         $(p_box).css({ left: x + 10, top: y - 30 });
@@ -399,6 +415,29 @@ $(()=>{
         //percent 
         let perc = 100*Math.abs(currPrice - megaChart<%= symbol.id %>.rec.startPrice)/megaChart<%= symbol.id %>.rec.startPrice;
         $(p_box).text(perc.toFixed(2)+"%");
+
+        if(megaChart<%= symbol.id %>.rec.buildbars)
+        {
+            let fromtime = megaChart<%= symbol.id %>.rec.startTime>p.time?p.time:megaChart<%= symbol.id %>.rec.startTime;
+            let totime = megaChart<%= symbol.id %>.rec.startTime>p.time?megaChart<%= symbol.id %>.rec.startTime:p.time;
+            let fromprice = megaChart<%= symbol.id %>.rec.startPrice>currPrice?currPrice:megaChart<%= symbol.id %>.rec.startPrice;
+            let toprice = megaChart<%= symbol.id %>.rec.startPrice>currPrice?megaChart<%= symbol.id %>.rec.startPrice:currPrice;
+            let hightInPx = 
+            fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=vertvolume&fromtime=${fromtime}&totime=${totime}&fromprice=${fromprice}&toprice=${toprice}`)
+            .then((r) => r.json())
+            .then((he) => {
+                let barsCode = "";
+                let ratio = h/he.length;
+                he.forEach(e=>{
+                    barsCode = chartline<%= symbol.id %>(e.prec,ratio) + barsCode;
+                });
+                $("#b53_<%= symbol.id %>_percent_box2").html(barsCode);
+            })
+            .catch((er) => {
+                console.warn(er);
+            });
+            megaChart<%= symbol.id %>.rec.buildbars = false;
+        }
         //console.log(p);
         //console.log(currPrice);
         //console.log(megaChart<%= symbol.id %>.chart.TM.Da.gi.Da.Qo.h[0].l.Q_.h[0].l.TM.gi.ct.Ai);
@@ -408,6 +447,8 @@ $(()=>{
     $("body").append(rec2html<%= symbol.id %>);
     $("#b53_<%= symbol.id %>_percent_box").on("contextmenu",(e)=>{return false;});
     $("#b53_<%= symbol.id %>_percent_box2").on("contextmenu",(e)=>{return false;});
+
+    
     //rec1html<%= symbol.id %>
     //$('body').on('contextmenu', '#myCanvas', function(e){ return false; });
     //var megaPr = megaChart141.series[0].seria.createPriceLine({

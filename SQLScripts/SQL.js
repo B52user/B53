@@ -152,6 +152,26 @@ const SQL = {
                 group by a.candletime
                 order by 1 asc
                 `,
+        SELECT_Trades_VertVolume: (tableName,timefrom,timeto,pricefrom,priceto) => `
+                with ctime as(
+                    select 
+                        distinct
+                        a.price,
+                        a.buy,
+                        a.quantity,
+                        a.id
+                    from dbo.${tableName} a
+                    where a."time">${timefrom}000 and a."time"<=${timeto}000
+                    and a.price>=${pricefrom} and a.price<=${priceto}
+                    order by a.id desc
+                )
+                select 
+                a.price,
+                sum(a.quantity) as volume
+                from ctime a 
+                group by a.price
+                order by 1 asc
+            `,
     },
     INSERT:{
         INSERT_Default_Market:`
