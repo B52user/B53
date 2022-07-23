@@ -8,6 +8,7 @@ const HistUploadService = require('./Services/HistUploadService.js');
 const express = require('express');
 const {Client} = require('pg');
 const Binance = require('node-binance-api-ext');
+const Binance2 = require('node-binance-api');
 //init web
 const app = express();
 app.set("view engine", "ejs");;
@@ -19,6 +20,10 @@ const pg_db = new Client({connectionString});
 pg_db.connect();
 //init Binance
 const bi = Binance({
+    APIKEY: 'MlmTyzzGbiFSDNyrI745NboXTBS9AdKXwxLMXd00aUWpWKPcI8hiRIfDpFv0oI8o',
+    APISECRET: 'u3fNSMJlYwTMwCOb3X5Bvp3xrpiogEN1MyQbDdtYS3lisd2VB6aKV8KjCaGmgFIg'
+});
+const bi2 = new Binance2().options({
     APIKEY: 'MlmTyzzGbiFSDNyrI745NboXTBS9AdKXwxLMXd00aUWpWKPcI8hiRIfDpFv0oI8o',
     APISECRET: 'u3fNSMJlYwTMwCOb3X5Bvp3xrpiogEN1MyQbDdtYS3lisd2VB6aKV8KjCaGmgFIg'
 });
@@ -63,7 +68,7 @@ app.get('/symbols', function(req, res) {
         });
     });
 });
-
+app.get('/system', function(req, res) {res.render("system");});
 
 //controllers
 app.get("/candles",async(req,res)=>{
@@ -226,15 +231,15 @@ app.post("/symbols_health",async(req,res)=>{
             }
 
             let s_t_srv = tSrvs.find(a=>a.Symbol.id == symba.pair);
-            if(!s_t_srv) eInfo.sreal = {style:"btn-secondary",text:"Fut R Off"}
+            if(!s_t_srv) eInfo.sreal = {style:"btn-secondary",text:"Spt R Off"}
             else {
-                if((new Date().getTime() - s_t_srv.LastRealCandleTime)<2000) eInfo.sreal = {style:"btn-success",text:"Fut R <2s"}
-                else if((new Date().getTime() - s_t_srv.LastRealCandleTime)<5000) eInfo.sreal = {style:"btn-warning",text:"Fut R <5s"}
-                else eInfo.sreal = {style:"btn-danger",text:"Fut R -"+((new Date().getTime() - s_t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
+                if((new Date().getTime() - s_t_srv.LastRealCandleTime)<2000) eInfo.sreal = {style:"btn-success",text:"Spt R <2s"}
+                else if((new Date().getTime() - s_t_srv.LastRealCandleTime)<5000) eInfo.sreal = {style:"btn-warning",text:"Spt R <5s"}
+                else eInfo.sreal = {style:"btn-danger",text:"Spt R -"+((new Date().getTime() - s_t_srv.LastRealCandleTime)/60000).toFixed(1)+"m"};
             }
 
             let s_h_srv = hSrvs.find(a=>a.Symbol.id == symba.pair);
-            if(!s_h_srv) eInfo.shist = {style:"btn-secondary",text:"Fut H Off"}
+            if(!s_h_srv) eInfo.shist = {style:"btn-secondary",text:"Spt H Off"}
             else {
                 if(s_h_srv.HistoryTimeLeft!=null) {
                     //calc time left
@@ -242,7 +247,7 @@ app.post("/symbols_health",async(req,res)=>{
                     let timeLeft = (s_h_srv.HistoryTimeLeft.lastGapClose - s_h_srv.HistoryTimeLeft.timeWhenStop)/speed;
                     eInfo.shist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
                 } 
-                else eInfo.shist = {style:"btn-success",text:"Fut H"};
+                else eInfo.shist = {style:"btn-success",text:"Spt H"};
             }
 
             toReturn.push(eInfo); 
@@ -289,6 +294,7 @@ app.get("/pushservice",async(req,res)=>{
 });
 
 //renew coins
+/*
 bi.futures.exchangeInfo().then(info=>{
     let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
         symbol:s.symbol,
@@ -313,4 +319,20 @@ bi.spot.exchangeInfo().then(info=>{
         minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').minNotional
     }));
     DB.InsertUpdateSymbols('Binance',symbolInfo).then(()=>console.log("Binance spot symbols info updated"));
-})
+});
+*/
+//let st = bi2.getOpenInterestStatistics({symbol:"BTCUSDT",period:"5m",limit:500}).then(r=>{console.log(r);});
+bi.promiseRequest("futures/data/openInterestHist",{
+    symbol:"BTCUSDT",
+    period:"5m",
+    limit:30
+},{base:"https://fapi.binance.com/"}).then(r=>console.log(r));
+
+//bi.webSocket.futuresAggTradeStream("API3USDT",console.log);
+/*
+bi2.futuresHistDataId(
+    "BTCUSDT", {
+      startTime: new Date().getTime() - 24 * 60 * 60 * 1000,
+      endTime: new Date().getTime(),
+      dataType: 'T_TRADE'
+    }).then(r=>console.log(r));*/

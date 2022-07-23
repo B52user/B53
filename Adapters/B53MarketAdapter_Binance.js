@@ -29,6 +29,24 @@ class B53MarketAdapter_Binance{
             return await this.BI.spot.historicalTrades(symbolInfo.symbol,{fromId:lastid,limit:500});
         }
     }
+    async GetLastInterest(symbolInfo){
+        if(symbolInfo.isfutures) {
+            return await this.BI.futures.openInterest(symbolInfo.symbol);
+        }
+        else
+        {
+            console.error("Open interest cannot be retrieved for spot symbol");
+        }
+    }
+    async Get5mInterest(symbolInfo){
+        if(symbolInfo.isfutures) {
+            //return await this.BI.futures.(symbolInfo.symbol);
+        }
+        else
+        {
+            console.error("Open interest cannot be retrieved for spot symbol");
+        }
+    }
 }
 
 module.exports = B53MarketAdapter_Binance;

@@ -175,15 +175,7 @@ var megaChart<%= symbol.id %> = {
                     });
             },
             (can)=>{
-                /*
-                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
-                if(!tima) return;
-                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
-                    .then(res=>res.json())
-                    .then(j=>{
-                        can.update(j);
-                });
-                */
+
             }
         );
 
@@ -211,51 +203,7 @@ var megaChart<%= symbol.id %> = {
                     });
             },
             (can)=>{
-                /*
-                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
-                if(!tima) return;
-                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
-                    .then(res=>res.json())
-                    .then(j=>{
-                        can.update(j);
-                });
-                */
-            }
-        );
-        
-        //tradefreq
-        
-        megaChart<%= symbol.id %>.buildHistSeria(
-            {
-                color: "rgba(255, 147, 203, 0.8)",
-                lineWidth: 2,
-                title:"Trade Freq",
-                priceFormat: {
-                    type: "volume"
-                },
-                overlay: true,
-                lastValueVisible:false,
-                title:"Freq",
-                priceLineVisible:false,
-                pane:1
-            },
-            (can)=>{
-                fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=tradefreq`)
-                    .then(res=>res.json())
-                    .then(j=>{
-                        can.setData(j);
-                    });
-            },
-            (can)=>{
-                /*
-                let tima = $("#b53_<%= symbol.id %>_time").attr("data-value");
-                if(!tima) return;
-                fetch(`/lastcandle?time=${tima}&symbolid=<%= symbol.id %>`)
-                    .then(res=>res.json())
-                    .then(j=>{
-                        can.update(j);
-                });
-                */
+
             }
         );
         
@@ -277,6 +225,60 @@ var megaChart<%= symbol.id %> = {
             newdata: ()=> {funcToRenew(chartSeria);}
         };
         megaChart<%= symbol.id %>.series.push(newseria);
+    },
+    Indicators: {
+        AddFrequency:()=>{
+            megaChart<%= symbol.id %>.buildHistSeria(
+                {
+                    color: "rgba(255, 147, 203, 0.8)",
+                    lineWidth: 2,
+                    title:"Trade Freq",
+                    priceFormat: {
+                        type: "volume"
+                    },
+                    overlay: true,
+                    lastValueVisible:false,
+                    title:"Freq",
+                    priceLineVisible:false,
+                    pane:1
+                },
+                (can)=>{
+                    fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=tradefreq`)
+                        .then(res=>res.json())
+                        .then(j=>{
+                            can.setData(j);
+                        });
+                },
+                (can)=>{
+                    
+                });
+        },
+        AddInterest:()=>{
+            megaChart<%= symbol.id %>.buildCanldleSeria(
+                {
+                    color: "rgba(255, 147, 203, 0.8)",
+                    lineWidth: 2,
+                    title:"Trade Freq",
+                    priceFormat: {
+                        type: "volume"
+                    },
+                    overlay: true,
+                    lastValueVisible:false,
+                    title:"Interest",
+                    priceLineVisible:false,
+                    pane:1
+                },
+                (can)=>{
+                    fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=interest`)
+                        .then(res=>res.json())
+                        .then(j=>{
+                            can.setData(j);
+                        });
+                },
+                (can)=>{
+                    
+                });
+        }
     }
 };
 
@@ -376,6 +378,7 @@ $(()=>{
         }
         
     });
+
     megaChart<%= symbol.id %>.chart.subscribeCrosshairMove((p)=>{
         if(!p.point||!megaChart<%= symbol.id %>.rclick) return;
         let currPrice = megaChart<%= symbol.id %>.chart.Ec.ri.A.Mi;
@@ -422,7 +425,8 @@ $(()=>{
             let totime = megaChart<%= symbol.id %>.rec.startTime>p.time?megaChart<%= symbol.id %>.rec.startTime:p.time;
             let fromprice = megaChart<%= symbol.id %>.rec.startPrice>currPrice?currPrice:megaChart<%= symbol.id %>.rec.startPrice;
             let toprice = megaChart<%= symbol.id %>.rec.startPrice>currPrice?megaChart<%= symbol.id %>.rec.startPrice:currPrice;
-            let hightInPx = 
+            megaChart<%= symbol.id %>.rec.buildbars = false;
+            if(!fromprice||!fromtime||!toprice||!totime) return;
             fetch(`/indicator?time=${$("#b53_<%= symbol.id %>_time").attr("data-value")}&symbolid=<%= symbol.id %>&type=vertvolume&fromtime=${fromtime}&totime=${totime}&fromprice=${fromprice}&toprice=${toprice}`)
             .then((r) => r.json())
             .then((he) => {
@@ -436,7 +440,6 @@ $(()=>{
             .catch((er) => {
                 console.warn(er);
             });
-            megaChart<%= symbol.id %>.rec.buildbars = false;
         }
         //console.log(p);
         //console.log(currPrice);

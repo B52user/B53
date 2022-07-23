@@ -1,32 +1,53 @@
 <%- include('header'); %>
 <h3>SYMBOLS</h3>
 <div class="row">
-    <div class="col-1 text-end px-1"><input class="form-check-input big-checkbox " type="checkbox" value=""></div>
-    <div class="col-1 px-1"><button class="btn btn-success btn-sm col-12" id="B53_Symbols_New" data-bs-toggle="modal" data-bs-target="#b53_newCoin">📝 New</button></div>
-    <div class="col-1 px-1"><button class="btn btn-danger btn-sm col-12" id="B53_Symbols_Delete">💩 Delete</button></div>
-    <div class="col-5 px-1"></div>
-    <div class="col-1 px-1"><button class="btn btn-info btn-sm col-12" id="B53_Symbols_Refresh">🔋 Refresh</button></div>
+    <div class="col-8">
+        <div class="row">
+            <div class="col-1 text-end px-1"><input class="form-check-input big-checkbox " type="checkbox" value=""></div>
+            <div class="col-1 px-1"><button class="btn btn-success btn-sm col-12" id="B53_Symbols_New" data-bs-toggle="modal" data-bs-target="#b53_newCoin">📝 New</button></div>
+            <div class="col-1 px-1"><button class="btn btn-danger btn-sm col-12" id="B53_Symbols_Delete">💩 Delete</button></div>
+            <div class="col-1 px-1"><button class="btn btn-info btn-sm col-12" id="B53_Symbols_Active">👑 Active</button></div>
+            <div class="col-4 px-1">
+                <input class="form-control" type="text" placeholder="Filter" id="b53_filter_acc">
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="row">
+            <div class="col-2 px-1"><button class="btn btn-info btn-sm col-12" id="B53_Symbols_Refresh">🔋 Refresh</button></div>
+        </div>
+    </div>
+    
 </div>
 <div class="row mt-3">
     <div class="accordion">
 <% 
         rows.forEach((row)=>{
 %>
-        <div class="accordion-item">
+        <div class="accordion-item" symbolid="<%= row.id %>" symbol="<%= row.symbol %>">
             <div class="accordion-header">
                 <div class="row">
-                    <div class="col-6">
+                    <div class="col-4">
                         <div class="row">
                             <span class="col-1 border-end text-end"><input class="form-check-input big-checkbox" type="checkbox" value=""></span>
-                            <span class="col-3 border-end text-start fs-5 b53symb" symbolid="<%= row.id %>"><%= row.symbol %></span>
+                            <span class="col-3 border-end text-start fs-5 b53symb"><%= row.symbol %></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realbutton">Fut R</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histbutton">Fut H</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realsbutton">Spot R</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histsbutton">Spot H</button></span>
-                            <span class="col-2 px-1"></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realibutton">Int R</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histibutton">Int H</button></span>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
+                        <div class="row">
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realsbutton">Spot R</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histsbutton">Spot H</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53reallbutton">Liq R</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histlbutton">Liq H</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realfbutton">Fund R</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histfbutton">Fund H</button></span>
+                        </div>
+                    </div>
+                    <div class="col-4">
                         <div class="row">
                             <span class="col-2"></span>
                             <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
@@ -86,11 +107,11 @@
                 <div class="row mt-1">
                     <div class="col-3">
                         <label for="b53_new_hours" class="form-label">Hours Futures to upload history</label>
-                        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_new_hours">
+                        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_new_hours" value="1">
                     </div>
                     <div class="col-3">
                         <label for="b53_new_p_hours" class="form-label">Hours SPOT to upload history</label>
-                        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_new_p_hours">
+                        <input class="form-control" type="text" placeholder="Hours to upload history" id="b53_new_p_hours" value="1">
                     </div>
                 </div>
             </div>
@@ -131,7 +152,7 @@
             }
             else
             {
-                fetch("/s_d?symbolid="+$(e.target).closest(".accordion-item").find(".b53symb").attr("symbolid"))
+                fetch("/s_d?symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
                 .then((r) => r.text())
                 .then((h) => {
                     $(e.target).closest(".accordion-item").find(".accordion-body").html(h);
@@ -162,6 +183,18 @@
                 $("#b53_new_spot_list").html(
                     h.map(e=>`<option data-value='${e.value}' value='${e.name}'>`).join('')
                 );
+
+                //add onchange of futures if any spot like that
+                $("#b53_new_futuresName").change(()=>{
+                    if($("#b53_new_futuresName").val()!="")
+                    {
+                        let optionLikeThat = $(`#b53_new_spot_list option[value='${$("#b53_new_futuresName").val()}']`);
+                        if(optionLikeThat.length)
+                        {
+                            $("#b53_new_spotName").val(optionLikeThat.val());
+                        }
+                    }
+                });
             })
             .catch((er) => {
                 console.warn(er);
@@ -193,7 +226,7 @@
             });
         });
         let health = setInterval(()=>{
-            let arr = $(".b53symb").map((i,e)=>$(e).attr("symbolid")).get();
+            let arr = $(".accordion-item").map((i,e)=>$(e).attr("symbolid")).get();
             fetch("/symbols_health",{method:'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -202,17 +235,17 @@
                 .then((r) => r.json())
                 .then((res)=>{
                     res.forEach((s) => {
-                        let theReal = $(`span[symbolid='${s.sid}']`).closest(".accordion-item").find(".b53realbutton");
+                        let theReal = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53realbutton");
                         theReal.attr("class",s.real.style+" btn btn-sm col-12 b53realbutton");
                         theReal.text(s.real.text);
-                        let theHist = $(`span[symbolid='${s.sid}']`).closest(".accordion-item").find(".b53histbutton");
+                        let theHist =$(`.accordion-item[symbolid='${s.sid}']`).find(".b53histbutton");
                         theHist.attr("class",s.hist.style+" btn btn-sm col-12 b53histbutton");
                         theHist.text(s.hist.text);
 
-                        let theSReal = $(`span[symbolid='${s.sid}']`).closest(".accordion-item").find(".b53realsbutton");
+                        let theSReal = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53realsbutton");
                         theSReal.attr("class",s.sreal.style+" btn btn-sm col-12 b53realsbutton");
                         theSReal.text(s.sreal.text);
-                        let theSHist = $(`span[symbolid='${s.sid}']`).closest(".accordion-item").find(".b53histsbutton");
+                        let theSHist = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53histsbutton");
                         theSHist.attr("class",s.shist.style+" btn btn-sm col-12 b53histsbutton");
                         theSHist.text(s.shist.text);
                     });
@@ -221,16 +254,38 @@
             });
         },500);
         $(".b53realbutton").on("mouseup",(e)=>{
-            fetch("/pushservice?srvname=trade&symbolid="+$(e.target).closest(".accordion-item").find(".b53symb").attr("symbolid"))
+            fetch("/pushservice?srvname=trade&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
             .catch((er) => {
                 console.warn(er);
             });
         });
         $(".b53histbutton").on("mouseup",(e)=>{
-            fetch("/pushservice?srvname=hist&symbolid="+$(e.target).closest(".accordion-item").find(".b53symb").attr("symbolid"))
+            fetch("/pushservice?srvname=hist&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
             .catch((er) => {
                 console.warn(er);
             });
+        });
+        $("#B53_Symbols_Active").click((e,h)=>{
+            if($(e.target).text()=="👑 Active")
+            {
+                $(e.target).text("👑 All");
+                //with div id like penisholder
+                $(".accordion-item").hide();
+                $("div[id^='penisholder']").closest(".accordion-item").show();
+                return;
+            }
+            //all, set active
+            $(e.target).text("👑 Active");
+            $(".accordion-item").show();
+        });
+        $("#b53_filter_acc").keyup(()=>{
+            let bla = $('#b53_filter_acc').val().toUpperCase();
+            if(bla)
+            {
+                $(".accordion-item").hide();
+                $(`.accordion-item[symbol*='${bla}']`).show();
+            }
+            else $(".accordion-item").show();
         });
     });
 </script>

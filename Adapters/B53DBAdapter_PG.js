@@ -78,7 +78,6 @@ class B53DBAdapter_PG
         });
         return toReturn;
     }
-
     async GetIndicator_Volume(marketName,symbol,timeMS,timeFrom=null) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
@@ -94,7 +93,6 @@ class B53DBAdapter_PG
         });
         return toReturn;
     }
-
     async GetIndicator_SellVolume(marketName,symbol,timeMS,timeFrom=null) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
@@ -110,7 +108,6 @@ class B53DBAdapter_PG
         });
         return toReturn;
     }
-
     async GetIndicator_TradeFreq(marketName,symbol,timeMS,timeFrom=null) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
@@ -160,7 +157,6 @@ class B53DBAdapter_PG
                 close: parseFloat(candle.endprice)
         };
     }
-
     async InsertUpdateSymbols(marketName,symbolsInfo) {
         let marketid = await this.DB.query("select id from dbo.b53markets where name='"+marketName+"'");
         for (const s of symbolsInfo) {
@@ -168,28 +164,23 @@ class B53DBAdapter_PG
             await this.DB.query(query);
         }
     }
-
     async GetMarkets() {
         let markets = await this.DB.query("select * from dbo.b53markets");
         return markets.rows;
     }
-
     async GetSymbolsByTypeAndMarket(martketName,isfutures){
         let symbols = await this.DB.query(SQL.SELECT.SELECT_Symbol_ByTypeAndMarket(martketName,isfutures));
         return symbols.rows;
     }
-
     async Update(table,id,payload){
         let quert = SQL.UPDATE.Update(table,id,payload);
         await this.DB.query(quert);
     }
-
     async GetActiveSymbols(){
         let query = `select a.* from dbo.b53symbols a where a.ismainlist=true order by a.symbol asc`;
         let res = await this.DB.query(query);
         return res.rows;
     }
-
     async GetSymbolById(id){
         let query = `
         select
@@ -204,7 +195,6 @@ class B53DBAdapter_PG
         let res = await this.DB.query(query);
         return res.rows[0];
     }
-
     async GetLastTrade(marketName,symbol){
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
