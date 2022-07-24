@@ -34,23 +34,26 @@
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realbutton">Fut R</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histbutton">Fut H</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realibutton">Int R</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histibutton">Int H</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53reali5button">I5m R</button></span>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="row">
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histibutton">Int H</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realsbutton">Spot R</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histsbutton">Spot H</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53reallbutton">Liq R</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histlbutton">Liq H</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realfbutton">Fund R</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histfbutton">Fund H</button></span>
+
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-2">
                         <div class="row">
-                            <span class="col-2"></span>
-                            <span class="col-2"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <span class="col-4"><button class="btn btn-info btn-sm col-12">PopOut</button></span>
                             <span class="col-8">
                                 <button id="b53_<%= row.symbol %>_colapse" class="btn-sm accordion-button collapsed b53colapse" type="button" data-bs-toggle="collapse" data-bs-target="#b53_<%= row.symbol %>_collapseTwo" aria-expanded="false" aria-controls="b53_<%= row.symbol %>_collapseTwo">
                                     SHOW!
@@ -248,6 +251,18 @@
                         let theSHist = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53histsbutton");
                         theSHist.attr("class",s.shist.style+" btn btn-sm col-12 b53histsbutton");
                         theSHist.text(s.shist.text);
+
+                        let theIReal = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53realibutton");
+                        theIReal.attr("class",s.ireal.style+" btn btn-sm col-12 b53realibutton");
+                        theIReal.text(s.ireal.text);
+
+                        let theI5Real = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53reali5button");
+                        theI5Real.attr("class",s.i5real.style+" btn btn-sm col-12 b53reali5button");
+                        theI5Real.text(s.i5real.text);
+                        
+                        let theIHist = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53histibutton");
+                        theIHist.attr("class",s.ihist.style+" btn btn-sm col-12 b53histibutton");
+                        theIHist.text(s.ihist.text);
                     });
             }).catch((er) => {
                 console.warn(er);
@@ -261,6 +276,36 @@
         });
         $(".b53histbutton").on("mouseup",(e)=>{
             fetch("/pushservice?srvname=hist&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $(".b53realsbutton").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=trades&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $(".b53histsbutton").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=hists&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $(".b53realibutton").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=interest&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $(".b53reali5button").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=interest5m&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+        $(".b53histibutton").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=interesthist&symbolid="+$(e.target).closest(".accordion-item").attr("symbolid"))
             .catch((er) => {
                 console.warn(er);
             });

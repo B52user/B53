@@ -4,6 +4,9 @@ const B53DBAdapter_PG = require('./Adapters/B53DBAdapter_PG.js');
 const B53MarketAdapter_Binance = require('./Adapters/B53MarketAdapter_Binance.js');
 const TradeUploadService = require('./Services/TradesUploadService.js');
 const HistUploadService = require('./Services/HistUploadService.js');
+const InterestHistUploadService = require('./Services/InterestHistUploadService.js');
+const InsterestUploadService = require('./Services/InterestUploadService');
+const Insterest5mUploadService = require('./Services/Insterest5mUploadService.js');
 
 const express = require('express');
 const {Client} = require('pg');
@@ -32,6 +35,9 @@ const DB = new B53DBAdapter_PG(pg_db);
 const Market = new B53MarketAdapter_Binance(bi);
 var tSrvs = [];
 var hSrvs = [];
+var iSrvs = [];
+var ihSrvs = [];
+var i5Srvs = [];
 
 //start tradeupload
 /*
@@ -54,7 +60,7 @@ let tSrvs = [];
 */
 //init routes
 app.use("/static",express.static("static"));
-app.get('/', function(req, res) {res.render("symbols");});
+app.get('/', function(req, res) {res.redirect("/symbols");});
 app.get('/s_d', async(req, res) => {
     let symbol = await DB.GetSymbolById(req.query.symbolid);
     res.render("symbol_dashboard",{symbol:symbol});
@@ -250,6 +256,33 @@ app.post("/symbols_health",async(req,res)=>{
                 else eInfo.shist = {style:"btn-success",text:"Spt H"};
             }
 
+            let i_t_srv = iSrvs.find(a=>a.Symbol.id == symba.id);
+            if(!i_t_srv) eInfo.ireal = {style:"btn-secondary",text:"Int R Off"}
+            else {
+                if((new Date().getTime() - i_t_srv.LastRealInterestTime)<2000) eInfo.ireal = {style:"btn-success",text:"Int R <2s"}
+                else if((new Date().getTime() - i_t_srv.LastRealInterestTime)<5000) eInfo.ireal = {style:"btn-warning",text:"Int R <5s"}
+                else eInfo.ireal = {style:"btn-danger",text:"Int R -"+((new Date().getTime() - i_t_srv.LastRealInterestTime)/60000).toFixed(1)+"m"};
+            }
+
+            let i5_t_srv = i5Srvs.find(a=>a.Symbol.id == symba.id);
+            if(!i5_t_srv) eInfo.i5real = {style:"btn-secondary",text:"I5m R Off"}
+            else {
+                if((new Date().getTime() - i5_t_srv.LastRealInterestTime)<60000) eInfo.i5real = {style:"btn-success",text:"I5m R <1m"}
+                else if((new Date().getTime() - i5_t_srv.LastRealInterestTime)<300000) eInfo.i5real = {style:"btn-warning",text:"I5m R <5m"}
+                else eInfo.i5real = {style:"btn-danger",text:"I5m R -"+((new Date().getTime() - i5_t_srv.LastRealInterestTime)/60000).toFixed(1)+"m"};
+            }
+
+            let i_h_srv = ihSrvs.find(a=>a.Symbol.id == symba.id);
+            if(!i_h_srv) eInfo.ihist = {style:"btn-secondary",text:"Int H Off"}
+            else {
+                if(i_h_srv.HistoryTimeLeft!=null) {
+                    let speed = (i_h_srv.HistoryTimeLeft.lastGapStartFrom - i_h_srv.HistoryTimeLeft.lastGapClose)/(new Date().getTime() - i_h_srv.HistoryTimeLeft.lastGapStartTime);
+                    let timeLeft = (i_h_srv.HistoryTimeLeft.lastGapClose - i_h_srv.HistoryTimeLeft.timeWhenStop)/speed;
+                    eInfo.ihist = {style:"btn-warning",text:"H "+(timeLeft/60000).toFixed(1)+"m " + speed.toFixed(0)+"r/s"};
+                } 
+                else eInfo.ihist = {style:"btn-success",text:"Int H"};
+            }
+
             toReturn.push(eInfo); 
         }
 
@@ -288,51 +321,105 @@ app.get("/pushservice",async(req,res)=>{
                 hSrvs.push(hS);
             }
         }
+        if(srvName=="trades") {
+            let symbex = await DB.GetSymbolById(symbolid);
+            let symb = await DB.GetSymbolById(symbex.pair);
+            if(tSrvs.some(a=>a.Symbol.id==symbolid)){
+                tSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                tSrvs = tSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let tS = new TradeUploadService(Market,DB,500,symb);
+                tS.Start();
+                tSrvs.push(tS);
+            }
+        }
+        if(srvName=="hists") {
+            let symbex = await DB.GetSymbolById(symbolid);
+            let symb = await DB.GetSymbolById(symbex.pair);
+            if(hSrvs.some(a=>a.Symbol.id==symbolid)){
+                hSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                hSrvs = hSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let hS = new HistUploadService(Market,DB,1000,symb);
+                hS.Start();
+                hSrvs.push(hS);
+            }
+        }
+        if(srvName=="interest") {
+            let symb = await DB.GetSymbolById(symbolid);
+            if(iSrvs.some(a=>a.Symbol.id==symbolid)){
+                iSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                iSrvs = iSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let tS = new InsterestUploadService(Market,DB,500,symb);
+                tS.Start();
+                iSrvs.push(tS);
+            }
+        }
+        if(srvName=="interesthist") {
+            let symb = await DB.GetSymbolById(symbolid);
+            if(ihSrvs.some(a=>a.Symbol.id==symbolid)){
+                ihSrvs.find(a=>a.Symbol.id==symbolid).Stop();
+                ihSrvs = ihSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let hS = new InterestHistUploadService(Market,DB,1000,symb);
+                hS.Start();
+                ihSrvs.push(hS);
+            }
+        }
+        if(srvName=="interest5m") {
+            let symb = await DB.GetSymbolById(symbolid);
+            if(i5Srvs.some(a=>a.Symbol.id==symbolid)){
+                i5Srvs.find(a=>a.Symbol.id==symbolid).Stop();
+                i5Srvs = iSrvs.filter(a=>a.Symbol.id!=symbolid);
+            }
+            else
+            {
+                let tS = new Insterest5mUploadService(Market,DB,60000,symb);
+                tS.Start();
+                i5Srvs.push(tS);
+            }
+        }
+        if(srvName=="exchangeInfoFut")
+        {
+            bi.futures.exchangeInfo().then(info=>{
+                let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
+                    symbol:s.symbol,
+                    isfutures:true, 
+                    mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
+                    tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
+                    minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
+                    quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
+                    minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').notional
+                }));
+                DB.InsertUpdateSymbols('Binance',symbolInfo).then(()=>console.log("Binance futures symbols info updated"));
+            });
+        }
+        if(srvName=="exchangeInfoSpot")
+        {
+            bi.spot.exchangeInfo().then(info=>{
+                let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
+                    symbol:s.symbol,
+                    isfutures:false, 
+                    mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
+                    tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
+                    minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
+                    quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
+                    minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').minNotional
+                }));
+                DB.InsertUpdateSymbols('Binance',symbolInfo).then(()=>console.log("Binance spot symbols info updated"));
+            });
+        }
         res.sendStatus(200);
     }
     catch(er) {console.error(er);res.status(500).send("pushservice");}
 });
 
-//renew coins
-/*
-bi.futures.exchangeInfo().then(info=>{
-    let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
-        symbol:s.symbol,
-        isfutures:true, 
-        mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
-        tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
-        minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
-        quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
-        minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').notional
-    }));
-    DB.InsertUpdateSymbols('Binance',symbolInfo).then(()=>console.log("Binance futures symbols info updated"));
-});
-
-bi.spot.exchangeInfo().then(info=>{
-    let symbolInfo = info.symbols.filter(a=>a.quoteAsset=='USDT').map(s=>({
-        symbol:s.symbol,
-        isfutures:false, 
-        mintick: s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize, 
-        tickprecision:s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.includes(".")?s.filters.find(f=>f.filterType=='PRICE_FILTER').tickSize.split(".")[1].indexOf('1'):'0',
-        minquantity:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty, 
-        quantityprecision:s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.includes(".")?s.filters.find(f=>f.filterType=='LOT_SIZE').minQty.split(".")[1].indexOf('1'):'0',
-        minnotal:s.filters.find(f=>f.filterType=='MIN_NOTIONAL').minNotional
-    }));
-    DB.InsertUpdateSymbols('Binance',symbolInfo).then(()=>console.log("Binance spot symbols info updated"));
-});
-*/
-//let st = bi2.getOpenInterestStatistics({symbol:"BTCUSDT",period:"5m",limit:500}).then(r=>{console.log(r);});
-bi.promiseRequest("futures/data/openInterestHist",{
-    symbol:"BTCUSDT",
-    period:"5m",
-    limit:30
-},{base:"https://fapi.binance.com/"}).then(r=>console.log(r));
-
-//bi.webSocket.futuresAggTradeStream("API3USDT",console.log);
-/*
-bi2.futuresHistDataId(
-    "BTCUSDT", {
-      startTime: new Date().getTime() - 24 * 60 * 60 * 1000,
-      endTime: new Date().getTime(),
-      dataType: 'T_TRADE'
-    }).then(r=>console.log(r));*/

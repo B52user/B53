@@ -10,4 +10,18 @@
     <div class="col-6">
     </div>
 </div>
+<script>
+    $("#B53_renew_symbols_fut").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=exchangeInfoFut")
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+    $("#B53_renew_symbols_spot").on("mouseup",(e)=>{
+            fetch("/pushservice?srvname=exchangeInfoSpot")
+            .catch((er) => {
+                console.warn(er);
+            });
+        });
+</script>
 <%- include('footer'); %>

@@ -33,7 +33,7 @@ class B53DBAdapter_PG
         return res.rows[0].exists;
     }
     _db_trade_table(marketName,symbol) {return "b53_" + marketName + "_" + (symbol.isfutures?"F":"S") + "_" + symbol.symbol;}
-
+    _db_interest_table(marketName,symbol,signature) {return "b53_interest_"+signature+"_"+marketName+marketName + "_" + (symbol.isfutures?"F":"S") + "_" + symbol.symbol;}
     async GetTradesGap(marketName,symbol,from) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
@@ -51,6 +51,23 @@ class B53DBAdapter_PG
         }
         return toReturn;
     }
+    async GetInterestGap(marketName,symbol,from,to){
+        let tableName = this._db_interest_table(marketName,symbol,"hist");
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolHistInterest(tableName));}
+
+        let resTo = await this.DB.query(SQL.SELECT.SELECT_Interest_GetGapTo(tableName,from));
+        let toReturn = {to:null};
+        if(resTo.rowCount==1) {
+            toReturn.to = resTo.rows[0].id;
+            toReturn.toTime = resTo.rows[0].time;
+            let resFrom = await this.DB.query(SQL.SELECT.SELECT_Interest_GetGapFrom(tableName,from,toReturn.to));
+            if(resFrom.rowCount==1){
+                toReturn.from = resFrom.rows[0].id;
+            }
+        }
+        return toReturn;
+    }
     async AddTrades(marketName,symbol,trades) {
         let tableName = this._db_trade_table(marketName,symbol);
         let itExists = await this._db_table_exists(tableName);
@@ -59,6 +76,22 @@ class B53DBAdapter_PG
         for (const t of trades) {
             await this.DB.query(SQL.INSERT.INSERT_Trade(tableName,t));
         }
+    }
+    async AddRealInterest(marketName,symbol,interest){
+        let tableName = this._db_interest_table(marketName,symbol,"real");
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolRealInterest(tableName));}
+        await this.DB.query(SQL.INSERT.INSERT_RealInterest(tableName,interest));
+    }
+    async AddHistInterest(marketName,symbol,cnadles){
+        let tableName = this._db_interest_table(marketName,symbol,"hist");
+        let itExists = await this._db_table_exists(tableName);
+        if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolHistInterest(tableName));}
+        for(let c of cnadles)
+        {
+            await this.DB.query(SQL.INSERT.INSERT_HistInterest(tableName,c));
+        }
+        
     }
     async GetCandles(marketName,symbol,timeMS,timeFrom=null) {
         let tableName = this._db_trade_table(marketName,symbol);

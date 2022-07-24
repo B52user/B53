@@ -12,11 +12,11 @@ class B53MarketAdapter_Binance{
     }
     async GetLastTrades(symbolInfo){
         if(symbolInfo.isfutures) {
-            return await this.BI.futures.trades(symbolInfo.symbol,{limit:500});
+            return await this.BI.futures.trades(symbolInfo.symbol,{limit:250});
         }
         else
         {
-            return await this.BI.spot.recentTrades(symbolInfo.symbol,{limit:500});
+            return await this.BI.spot.recentTrades(symbolInfo.symbol,{limit:250});
         }
     }
     async GetHistoricalTrades(symbolInfo,lastid) {
@@ -38,9 +38,30 @@ class B53MarketAdapter_Binance{
             console.error("Open interest cannot be retrieved for spot symbol");
         }
     }
-    async Get5mInterest(symbolInfo){
+    async GetLast5mInterest(symbolInfo){
         if(symbolInfo.isfutures) {
-            //return await this.BI.futures.(symbolInfo.symbol);
+            let params = {
+                symbol:symbolInfo.symbol,
+                period:"5m",
+                limit:30
+            };
+            return await this.BI.promiseRequest("futures/data/openInterestHist",params,{base:"https://fapi.binance.com/"});
+        }
+        else
+        {
+            console.error("Open interest cannot be retrieved for spot symbol");
+        }
+    }
+    async Get5mInterest(symbolInfo,startTime=null,endTime=null){
+        if(symbolInfo.isfutures) {
+            let params = {
+                symbol:symbolInfo.symbol,
+                period:"5m",
+                limit:500
+            };
+            if(startTime) params.startTime = startTime;
+            if(endTime) params.endTime = endTime;
+            return await this.BI.promiseRequest("futures/data/openInterestHist",params,{base:"https://fapi.binance.com/"});
         }
         else
         {

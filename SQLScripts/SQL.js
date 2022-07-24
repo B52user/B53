@@ -172,6 +172,27 @@ const SQL = {
                 group by a.price
                 order by 1 asc
             `,
+        SELECT_Interest_GetGapTo:(tableName,timeFrom) => `
+            select *
+            from dbo.${tableName} a
+            where 
+                a."timestamp" > ${timeFrom}
+                and
+                not exists (
+                    select id from dbo.${tableName} b
+                    where b."timestamp" = a."timestamp" - 300000
+                    limit 1
+                )
+            order by a."timestamp" desc
+            limit 1
+            `,
+        SELECT_Interest_GetGapFrom:(tableName,timeFrom,toTimestamp) => `
+            select *
+            from dbo.${tableName} a
+            where a."timestamp"<${toTimestamp}	and a."timestamp" > ${timeFrom}
+            order by a."timestamp" desc
+            limit 1
+        `,
     },
     INSERT:{
         INSERT_Default_Market:`
@@ -179,7 +200,6 @@ const SQL = {
             INSERT INTO dbo.B53Markets(name) VALUES ('FTX');
             `
         ,INSERT_UPDATE_Symbol:(marketid,symbol)=>`
-            
             update dbo.b53symbols set 
                 mintick = ${symbol.mintick},
                 tickprecision = ${symbol.tickprecision},
@@ -203,6 +223,14 @@ const SQL = {
         INSERT_Trade:(tableName,trade) => `
             INSERT INTO dbo.${tableName}(id, buy, price, quantity, "time")
             VALUES (${trade.id}, ${trade.buy}, ${trade.price}, ${trade.quantity}, ${trade.time});
+        `,
+        INSERT_RealInterest:(tableName,interest) =>`
+            INSERT INTO dbo.${tableName}("time", symbol, openinterest)
+            VALUES (${interest.time},'${interest.symbol}',${interest.openInterest})
+        `,
+        INSERT_HistInterest:(tableName,interest) =>`
+            INSERT INTO dbo.${tableName}("timestamp",symbol,sumopeninterest,sumopeninterestvalue)
+            VALUES (${interest.timestamp},'${interest.symbol}',${interest.sumOpenInterest},${interest.sumOpenInterestValue})
         `,
     },
     UPDATE:{
@@ -238,7 +266,23 @@ const SQL = {
                 time bigint NOT NULL
             );
         `
-        ,
+        ,CreateSymbolRealInterest:(tablename)=> `
+            CREATE TABLE IF NOT EXISTS dbo.${tablename}
+            (
+                time bigint NOT NULL,
+                symbol character varying(20) NOT NULL,
+                openInterest numeric(24,12) NOT NULL
+            );
+        `
+        ,CreateSymbolHistInterest:(tablename)=> `
+            CREATE TABLE IF NOT EXISTS dbo.${tablename}
+            (
+                timestamp bigint NOT NULL,
+                symbol character varying(20) NOT NULL,
+                sumOpenInterest numeric(24, 12) NOT NULL,
+                sumOpenInterestValue numeric(24, 12) NOT NULL
+            );
+        `
     }
 };
 
