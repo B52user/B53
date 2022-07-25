@@ -179,7 +179,7 @@ const SQL = {
                 a."timestamp" > ${timeFrom}
                 and
                 not exists (
-                    select id from dbo.${tableName} b
+                    select "timestamp" from dbo.${tableName} b
                     where b."timestamp" = a."timestamp" - 300000
                     limit 1
                 )
@@ -229,8 +229,10 @@ const SQL = {
             VALUES (${interest.time},'${interest.symbol}',${interest.openInterest})
         `,
         INSERT_HistInterest:(tableName,interest) =>`
+            UPDATE dbo.${tableName} SET symbol='${interest.symbol}',sumopeninterest=${interest.sumOpenInterest},sumopeninterestvalue=${interest.sumOpenInterestValue} WHERE "timestamp"=${interest.timestamp};
             INSERT INTO dbo.${tableName}("timestamp",symbol,sumopeninterest,sumopeninterestvalue)
-            VALUES (${interest.timestamp},'${interest.symbol}',${interest.sumOpenInterest},${interest.sumOpenInterestValue})
+            SELECT ${interest.timestamp},'${interest.symbol}',${interest.sumOpenInterest},${interest.sumOpenInterestValue}
+            WHERE NOT EXISTS (SELECT 1 FROM dbo.${tableName} WHERE "timestamp"=${interest.timestamp});
         `,
     },
     UPDATE:{

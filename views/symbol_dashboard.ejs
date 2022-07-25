@@ -287,6 +287,7 @@ $(()=>{
     megaChart<%= symbol.id %>.buildChart();
 
     $("#b53_<%= symbol.id %>_update").on("mouseup",(e)=>{
+        $(e.target).attr("css","btn btn-secondary btn-sm col-12 .b53symbolupdate");
         //save changes
         let spotid = $(`#b53_<%= symbol.id %>_spot_list option[value='${$("#b53_<%= symbol.id %>_spotName").val()}']`).attr('data-value');
         let hrs = $('#b53_<%= symbol.id %>_hours').val();
@@ -298,9 +299,19 @@ $(()=>{
                 body:JSON.stringify([
                     {name:"pair",value:spotid},
                     {name:"uploadhours",value:hrs},
-                    {name:"pair_uploadhours",value:hrs2},
                 ])}).then(()=>{
-                    //close done
+                    fetch("/update?table=dbo.b53symbols&id="+spotid,{method:'POST',
+                        headers: {
+                        "Content-Type": "application/json"
+                        },
+                        body:JSON.stringify([
+                            {name:"uploadhours",value:hrs2},
+                    ])}).then(()=>{
+                        //close done
+                        $(e.target).attr("css","btn btn-success btn-sm col-12 .b53symbolupdate");
+                    }).catch((er) => {
+                        console.warn(er);
+                    });
                     
             }).catch((er) => {
                 console.warn(er);

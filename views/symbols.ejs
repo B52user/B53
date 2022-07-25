@@ -42,8 +42,8 @@
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histibutton">Int H</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realsbutton">Spot R</button></span>
                             <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histsbutton">Spot H</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53reallbutton">Liq R</button></span>
-                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53histlbutton">Liq H</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realwfbutton">WB F</button></span>
+                            <span class="col-2 px-1"><button class="btn-secondary btn btn-sm col-12 b53realwsbutton">WB S</button></span>
 
                         </div>
                     </div>
@@ -219,11 +219,20 @@
                     {name:"pair",value:spotid},
                     {name:"ismainlist",value:true},
                     {name:"uploadhours",value:hrs},
-                    {name:"pair_uploadhours",value:hrs2},
                 ])}).then(()=>{
-                    //close done
-                    $('#b53_newCoin').modal('toggle');
-                    location.reload();
+                    fetch("/update?table=dbo.b53symbols&id="+spotid,{method:'POST',
+                        headers: {
+                        "Content-Type": "application/json"
+                        },
+                        body:JSON.stringify([
+                            {name:"uploadhours",value:hrs2},
+                    ])}).then(()=>{
+                        //close done
+                        $('#b53_newCoin').modal('toggle');
+                        location.reload();    
+                    }).catch((er) => {
+                        console.warn(er);
+                    });
             }).catch((er) => {
                 console.warn(er);
             });
@@ -259,7 +268,7 @@
                         let theI5Real = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53reali5button");
                         theI5Real.attr("class",s.i5real.style+" btn btn-sm col-12 b53reali5button");
                         theI5Real.text(s.i5real.text);
-                        
+
                         let theIHist = $(`.accordion-item[symbolid='${s.sid}']`).find(".b53histibutton");
                         theIHist.attr("class",s.ihist.style+" btn btn-sm col-12 b53histibutton");
                         theIHist.text(s.ihist.text);

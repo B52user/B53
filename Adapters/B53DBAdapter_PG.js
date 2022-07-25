@@ -55,15 +55,16 @@ class B53DBAdapter_PG
         let tableName = this._db_interest_table(marketName,symbol,"hist");
         let itExists = await this._db_table_exists(tableName);
         if(!itExists) {await this.DB.query(SQL.CREATE.CreateSymbolHistInterest(tableName));}
-
-        let resTo = await this.DB.query(SQL.SELECT.SELECT_Interest_GetGapTo(tableName,from));
+        let gapFromText = SQL.SELECT.SELECT_Interest_GetGapTo(tableName,from);
+        let resTo = await this.DB.query(gapFromText);
         let toReturn = {to:null};
         if(resTo.rowCount==1) {
-            toReturn.to = resTo.rows[0].id;
-            toReturn.toTime = resTo.rows[0].time;
-            let resFrom = await this.DB.query(SQL.SELECT.SELECT_Interest_GetGapFrom(tableName,from,toReturn.to));
+            toReturn.to = resTo.rows[0].timestamp;
+            toReturn.toTime = resTo.rows[0].timestamp;
+            let gapToText = SQL.SELECT.SELECT_Interest_GetGapFrom(tableName,from,toReturn.to);
+            let resFrom = await this.DB.query(gapToText);
             if(resFrom.rowCount==1){
-                toReturn.from = resFrom.rows[0].id;
+                toReturn.from = resFrom.rows[0].timestamp;
             }
         }
         return toReturn;

@@ -63,6 +63,8 @@ app.use("/static",express.static("static"));
 app.get('/', function(req, res) {res.redirect("/symbols");});
 app.get('/s_d', async(req, res) => {
     let symbol = await DB.GetSymbolById(req.query.symbolid);
+    let symbol2 = await DB.GetSymbolById(symbol.pair);
+    symbol.pair_uploadhours = symbol2.uploadhours;
     res.render("symbol_dashboard",{symbol:symbol});
 });
 app.get('/symbols', function(req, res) {
@@ -324,9 +326,9 @@ app.get("/pushservice",async(req,res)=>{
         if(srvName=="trades") {
             let symbex = await DB.GetSymbolById(symbolid);
             let symb = await DB.GetSymbolById(symbex.pair);
-            if(tSrvs.some(a=>a.Symbol.id==symbolid)){
-                tSrvs.find(a=>a.Symbol.id==symbolid).Stop();
-                tSrvs = tSrvs.filter(a=>a.Symbol.id!=symbolid);
+            if(tSrvs.some(a=>a.Symbol.id==symb.id)){
+                tSrvs.find(a=>a.Symbol.id==symb.id).Stop();
+                tSrvs = tSrvs.filter(a=>a.Symbol.id!=symb.id);
             }
             else
             {
@@ -338,9 +340,9 @@ app.get("/pushservice",async(req,res)=>{
         if(srvName=="hists") {
             let symbex = await DB.GetSymbolById(symbolid);
             let symb = await DB.GetSymbolById(symbex.pair);
-            if(hSrvs.some(a=>a.Symbol.id==symbolid)){
-                hSrvs.find(a=>a.Symbol.id==symbolid).Stop();
-                hSrvs = hSrvs.filter(a=>a.Symbol.id!=symbolid);
+            if(hSrvs.some(a=>a.Symbol.id==symb.id)){
+                hSrvs.find(a=>a.Symbol.id==symb.id).Stop();
+                hSrvs = hSrvs.filter(a=>a.Symbol.id!=symb.id);
             }
             else
             {
