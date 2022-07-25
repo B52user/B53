@@ -25,9 +25,9 @@ class InterestHistUploadService {
             {
                 //now fill gaps
                 let tNow = await this.Market.BI.futures.time();
-                let fromTime = tNow.serverTime - 60*60*1000*that.Symbol.uploadhours;
+                let fromTime = tNow.serverTime - 60*60*1000*that.Symbol.uploadhours - 300000;
+                fromTime = fromTime - (fromTime%300000);
                 let gap = await that.DB.GetInterestGap(that.Market.Name,that.Symbol,fromTime);
-                
                 if(gap.to!=null)
                 {
                     if(this.HistoryTimeLeft==null)
@@ -40,17 +40,9 @@ class InterestHistUploadService {
                     if(gap.from==null) gap.from = fromTime;
                     //get it
                     let histInt = await that.Market.Get5mInterest(that.Symbol,gap.from,gap.to);
-                    
-                    let filteredHists = histInt.map((b)=>({
-                        id:b.id,
-                        buy:!b.isBuyerMaker,
-                        price:b.price,
-                        quantity:b.qty,
-                        time:b.time
-                    }));
-                    if(filteredHists.length) {
-                        await that.DB.AddHistInterest(that.Market.Name,that.Symbol,filteredHists);
-                        let timeMin = Math.min(...filteredHists.map(a=>a.time));
+                    if(histInt.length) {
+                        await that.DB.AddHistInterest(that.Market.Name,that.Symbol,histInt);
+                        let timeMin = Math.min(...histInt.map(a=>a.time));
                         this.HistoryTimeLeft.lastGapClose = timeMin;
                     }
                 }
